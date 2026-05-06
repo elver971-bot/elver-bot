@@ -1,7 +1,8 @@
+import re
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import re
+
 import telebot
 from openai import OpenAI
 import gspread
