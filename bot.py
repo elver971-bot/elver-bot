@@ -25,13 +25,13 @@ def save_lead(message):
     text = message.text
     date = datetime.now().strftime("%d.%m.%Y %H:%M")
 
-    # запись в таблицу
-    sheet.append_row([
-        date,
-        name,
-        username,
-        text
-    ])
+    # запись в Supabase
+    supabase.table("leads").insert({
+        "name": name,
+        "username": username,
+        "phone": text,
+        "chat_id": str(message.chat.id)
+    }).execute()
 
     # уведомление тебе
     bot.send_message(
