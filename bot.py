@@ -11,6 +11,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
 user_memory = {}
+lead_words = [
+    "интересно",
+    "хочу",
+    "давайте",
+    "цена",
+    "стоит",
+    "сколько",
+    "подключить",
+    "связаться",
+    "нужна",
+    "готов"
+]
 
 # чтобы Render видел открытый порт
 def run_web():
@@ -90,6 +102,14 @@ def start(message):
 def chat(message):
     try:
         chat_id = message.chat.id
+        text = message.text.lower()
+
+if any(word in text for word in lead_words):
+    bot.reply_to(
+        message,
+        "Отлично. Оставьте номер телефона или @username — я свяжусь с вами и предложу решение под ваш бизнес 🚀"
+    )
+    return
 
         if chat_id not in user_memory:
             user_memory[chat_id] = [
