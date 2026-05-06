@@ -23,6 +23,20 @@ lead_words = [
     "нужна",
     "готов"
 ]
+def save_lead(message):
+    name = message.from_user.first_name or "Без имени"
+    username = message.from_user.username or "нет username"
+    chat_id = message.chat.id
+    text = message.text
+
+    with open("leads.txt", "a", encoding="utf-8") as f:
+        f.write(
+            f"Имя: {name}\n"
+            f"Username: @{username}\n"
+            f"Chat ID: {chat_id}\n"
+            f"Контакт: {text}\n"
+            f"{'-'*30}\n"
+        )
 
 # чтобы Render видел открытый порт
 def run_web():
