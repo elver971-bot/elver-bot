@@ -4,6 +4,55 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import telebot
 from openai import OpenAI
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
+# Google Sheets
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive",
+]
+
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "credentials.json",
+    scope
+)
+
+gs_client = gspread.authorize(creds)
+
+sheet = gs_client.open_by_key(
+    "19WfH3kS4C4PPku25-N1tbB_wxlb04iIIPku3r5sKbq0"
+).sheet1
+
+
+def save_lead(message):
+    username = (
+        f"@{message.from_user.username}"
+        if message.from_user.username
+        else "нет"
+    )
+
+    name = message.from_user.first_name or "Без имени"
+    text = message.text
+    date = datetime.now().strftime("%d.%m.%Y %H:%M")
+
+    # запись в таблицу
+    sheet.append_row([
+        date,
+        name,
+        username,
+        text
+    ])
+
+    # уведомление тебе
+    bot.send_message(
+        1908342578,
+        f"🔥 Новый лид\n\n"
+        f"Имя: {name}\n"
+        f"Username: {username}\n"
+        f"Контакт: {text}\n"
+        f"Дата: {date}"
+    )
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
