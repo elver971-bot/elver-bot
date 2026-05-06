@@ -120,8 +120,10 @@ def chat(message):
     try:
         chat_id = message.chat.id
         text = message.text.lower()
+
         contact_words = ["+", "@", "7", "8", "9"]
 
+        # если человек оставил контакт
         if (
             len(message.text) >= 6
             and any(symbol in message.text for symbol in contact_words)
@@ -134,13 +136,15 @@ def chat(message):
             )
             return
 
-if any(word in text for word in lead_words):
-    bot.reply_to(
-        message,
-        "Отлично. Оставьте номер телефона или @username — я свяжусь с вами и предложу решение под ваш бизнес 🚀"
-    )
-    return
+        # если проявил интерес
+        if any(word in text for word in lead_words):
+            bot.reply_to(
+                message,
+                "Отлично. Оставьте номер телефона или @username — я свяжусь с вами и предложу решение под ваш бизнес 🚀"
+            )
+            return
 
+        # память диалога
         if chat_id not in user_memory:
             user_memory[chat_id] = [
                 {"role": "system", "content": SYSTEM_PROMPT}
