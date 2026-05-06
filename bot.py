@@ -1,7 +1,7 @@
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
+import re
 import telebot
 from openai import OpenAI
 import gspread
@@ -170,21 +170,21 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
-        import re
+      
 
           # если человек прислал контакт
             phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
 
                  if (
                    re.search(phone_pattern, message.text)
-               or "@" in message.text
-              ):
-            save_lead(message)
+                   or "@" in message.text
+                 ):
+                   save_lead(message)
 
-            bot.reply_to(
-                message,
-                "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
-            )
+                   bot.reply_to(
+                       message,
+                       "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
+                   )
             return
 
         # если проявил интерес
