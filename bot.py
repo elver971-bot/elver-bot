@@ -170,21 +170,16 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
-      
+        # если человек прислал контакт
+        phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
 
-          # если человек прислал контакт
-            phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
+        if re.search(phone_pattern, message.text) or "@" in message.text:
+            save_lead(message)
 
-                 if (
-                   re.search(phone_pattern, message.text)
-                   or "@" in message.text
-                 ):
-                   save_lead(message)
-
-                   bot.reply_to(
-                       message,
-                       "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
-                   )
+            bot.reply_to(
+                message,
+                "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
+            )
             return
 
         # если проявил интерес
@@ -218,7 +213,6 @@ def chat(message):
             {"role": "assistant", "content": answer}
         )
 
-        # ограничиваем историю
         if len(user_memory[chat_id]) > 20:
             user_memory[chat_id] = (
                 [user_memory[chat_id][0]] + user_memory[chat_id][-19:]
