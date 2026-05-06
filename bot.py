@@ -10,7 +10,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
-
+user_memory = {}
 
 # чтобы Render видел открытый порт
 def run_web():
@@ -89,17 +89,36 @@ def start(message):
 @bot.message_handler(func=lambda message: True)
 def chat(message):
     try:
+        chat_id = message.chat.id
+
+        if chat_id not in user_memory:
+            user_memory[chat_id] = [
+                {"role": "system", "content": SYSTEM_PROMPT}
+            ]
+
+        user_memory[chat_id].append(
+            {"role": "user", "content": message.text}
+        )
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": message.text},
-            ],
+            messages=user_memory[chat_id],
             temperature=0.7,
             max_tokens=500,
         )
 
         answer = response.choices[0].message.content
+
+        user_memory[chat_id].append(
+            {"role": "assistant", "content": answer}
+        )
+
+        # ограничиваем историю
+        if len(user_memory[chat_id]) > 20:
+            user_memory[chat_id] = (
+                [user_memory[chat_id][0]] + user_memory[chat_id][-19:]
+            )
+
         bot.reply_to(message, answer)
 
     except Exception as e:
