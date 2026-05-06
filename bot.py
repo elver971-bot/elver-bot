@@ -2,7 +2,7 @@ import re
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
+from flask import Flask, request
 import telebot
 from openai import OpenAI
 import gspread
@@ -225,5 +225,27 @@ def chat(message):
         bot.reply_to(message, f"Ошибка AI: {e}")
 
 
-print("Bot started")
-bot.infinity_polling(skip_pending=True)
+from flask import Flask, request
+
+app = Flask(__name__)
+
+WEBHOOK_URL = "https://elver-bot.onrender.com/" + BOT_TOKEN
+
+bot.remove_webhook()
+bot.set_webhook(url=WEBHOOK_URL)
+
+@app.route('/' + BOT_TOKEN, methods=['POST'])
+def webhook():
+    json_str = request.get_data().decode('UTF-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return 'ok', 200
+
+@app.route('/')
+def index():
+    return 'Bot is running!', 200
+
+print("Webhook started")
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
