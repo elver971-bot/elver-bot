@@ -5,25 +5,13 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from flask import Flask, request
 import telebot
 from openai import OpenAI
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-# Google Sheets
-scope = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive",
-]
+from supabase import create_client
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    "credentials.json",
-    scope
-)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-gs_client = gspread.authorize(creds)
-
-sheet = gs_client.open_by_key(
-    "1jBHYE1fhUbs87Wok0QlG4ag65Ue6oyf4IwQev7RU_50"
-).sheet1
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 def save_lead(message):
