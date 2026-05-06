@@ -119,17 +119,17 @@ def chat(message):
         text = message.text.lower()
         contact_words = ["+", "@", "7", "8", "9"]
 
-if (
-    len(message.text) >= 6
-    and any(symbol in message.text for symbol in contact_words)
-):
-    save_lead(message)
+        if (
+            len(message.text) >= 6
+            and any(symbol in message.text for symbol in contact_words)
+        ):
+            save_lead(message)
 
-    bot.reply_to(
-        message,
-        "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
-    )
-    return
+            bot.reply_to(
+                message,
+                "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
+            )
+            return
 
 if any(word in text for word in lead_words):
     bot.reply_to(
