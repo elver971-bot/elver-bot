@@ -121,13 +121,15 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
-        contact_words = ["+", "@", "7", "8", "9"]
+        import re
 
-        # если человек оставил контакт
-        if (
-            len(message.text) >= 6
-            and any(symbol in message.text for symbol in contact_words)
-        ):
+          # если человек прислал контакт
+            phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
+
+                 if (
+                   re.search(phone_pattern, message.text)
+               or "@" in message.text
+              ):
             save_lead(message)
 
             bot.reply_to(
