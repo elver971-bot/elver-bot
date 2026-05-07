@@ -278,10 +278,10 @@ def chat(message):
         bot.reply_to(message, offer)
         return
         
-        elif step == "wait_contact":
-            email_pattern = r"[^@]+@[^@]+\.[^@]+"
+            elif step == "wait_contact":
+                email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
-             if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
+                 if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
 
                     lead_data[chat_id]["contact"] = message.text
 
