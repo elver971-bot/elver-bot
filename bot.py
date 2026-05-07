@@ -162,11 +162,36 @@ def chat(message):
                 lead_data[chat_id]["goal"] = message.text
                 lead_state[chat_id] = "wait_contact"
 
-                bot.reply_to(
-                    message,
-                    "Оставьте телефон или @username для связи 👌"
-                )
-                return
+                niche = lead_data[chat_id]["niche"].lower()
+                pain = lead_data[chat_id]["pain"].lower()
+                goal = lead_data[chat_id]["goal"].lower()
+
+               offer = (
+                   "Для вашей задачи вижу хорошее решение:\n\n"
+                   "✅ усилить поток клиентов\n"
+                   "✅ автоматизировать обработку заявок\n"
+                   "✅ убрать ручную рутину\n\n"
+                   "Под ваш бизнес можно собрать комплекс:\n"
+                   "• продающий сайт / воронку\n"
+                   "• рекламу\n"
+                   "• AI-консультанта\n"
+                   "• CRM + автоматизацию\n\n"
+                   "Оставьте телефон или @username для связи 👌"
+            )
+
+        # горячий лид
+        score = 50
+
+        if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
+        score += 20
+
+        if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
+             score += 30
+
+       lead_data[chat_id]["score"] = score
+
+       bot.reply_to(message, offer)
+       return
 
             elif step == "wait_contact":
                 if re.search(phone_pattern, message.text) or "@" in message.text:
