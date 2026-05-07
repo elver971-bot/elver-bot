@@ -46,7 +46,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
+
 user_memory = {}
+finished_leads = set()
+
 lead_state = {}
 lead_data = {}
 
@@ -308,7 +311,9 @@ def chat(message):
 
                     del lead_state[chat_id]
                     del lead_data[chat_id]
-
+                    
+                    finished_leads.add(chat_id)
+                    
                     bot.reply_to(
                         message,
                         "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным решением 🚀"
