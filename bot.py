@@ -339,11 +339,11 @@ def chat(message):
             return
 
         # если проявил интерес
-        if any(word in text for word in lead_words) and chat_id not in lead_state:
-            bot.reply_to(
-                message,
-                "Готовы начать диагностику?\n\nНапишите: да"
-            )
+        if (
+            any(word in text for word in lead_words)
+            and chat_id not in lead_state
+            and chat_id not in finished_leads
+        ):
             return
 
         # обычный AI чат
