@@ -47,6 +47,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
 user_memory = {}
+
+lead_state = {}
+lead_data = {}
+
 lead_words = [
     "интересно",
     "хочу",
@@ -127,15 +131,94 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
-        # если человек прислал контакт
         phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
 
-        if re.search(phone_pattern, message.text) or "@" in message.text:
-            save_lead(message)
+        # если человек в воронке
+        if chat_id in lead_state:
+
+            step = lead_state[chat_id]
+
+            if step == "wait_niche":
+                lead_data[chat_id]["niche"] = message.text
+                lead_state[chat_id] = "wait_pain"
+
+                bot.reply_to(
+                    message,
+                    "Что сейчас больше всего мешает росту?\n\nНапример:\n— мало заявок\n— дорого стоит реклама\n— слабые продажи"
+                )
+                return
+
+            elif step == "wait_pain":
+                lead_data[chat_id]["pain"] = message.text
+                lead_state[chat_id] = "wait_goal"
+
+                bot.reply_to(
+                    message,
+                    "Что хотите автоматизировать в первую очередь?"
+                )
+                return
+
+            elif step == "wait_goal":
+                lead_data[chat_id]["goal"] = message.text
+                lead_state[chat_id] = "wait_contact"
+
+                bot.reply_to(
+                    message,
+                    "Оставьте телефон или @username для связи 👌"
+                )
+                return
+
+            elif step == "wait_contact":
+                if re.search(phone_pattern, message.text) or "@" in message.text:
+
+                    lead_data[chat_id]["contact"] = message.text
+
+                    supabase.table("leads").insert({
+                        "name": message.from_user.first_name,
+                        "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
+                        "phone": message.text,
+                        "chat_id": str(chat_id),
+                        "niche": lead_data[chat_id]["niche"],
+                        "pain": lead_data[chat_id]["pain"],
+                        "goal": lead_data[chat_id]["goal"],
+                        "status": "new"
+                    }).execute()
+
+                    bot.send_message(
+                        1908342578,
+                        f"🔥 Новый лид\n\n"
+                        f"Имя: {message.from_user.first_name}\n"
+                        f"Username: @{message.from_user.username}\n"
+                        f"Ниша: {lead_data[chat_id]['niche']}\n"
+                        f"Боль: {lead_data[chat_id]['pain']}\n"
+                        f"Цель: {lead_data[chat_id]['goal']}\n"
+                        f"Контакт: {message.text}"
+                    )
+
+                    del lead_state[chat_id]
+                    del lead_data[chat_id]
+
+                    bot.reply_to(
+                        message,
+                        "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным решением 🚀"
+                    )
+                    return
+
+                else:
+                    bot.reply_to(
+                        message,
+                        "Отправьте телефон или @username 👌"
+                    )
+                    return
+
+        # запуск воронки
+        if text == "да":
+            lead_state[chat_id] = "wait_niche"
+            lead_data[chat_id] = {}
 
             bot.reply_to(
                 message,
-                "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным предложением по автоматизации 🚀"
+                "Чем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
             )
             return
 
@@ -143,11 +226,11 @@ def chat(message):
         if any(word in text for word in lead_words):
             bot.reply_to(
                 message,
-                "Отлично. Оставьте номер телефона или @username — я свяжусь с вами и предложу решение под ваш бизнес 🚀"
+                "Готовы начать диагностику?\n\nНапишите: да"
             )
             return
 
-        # память диалога
+        # обычный AI чат
         if chat_id not in user_memory:
             user_memory[chat_id] = [
                 {"role": "system", "content": SYSTEM_PROMPT}
@@ -169,11 +252,6 @@ def chat(message):
         user_memory[chat_id].append(
             {"role": "assistant", "content": answer}
         )
-
-        if len(user_memory[chat_id]) > 20:
-            user_memory[chat_id] = (
-                [user_memory[chat_id][0]] + user_memory[chat_id][-19:]
-            )
 
         bot.reply_to(message, answer)
 
