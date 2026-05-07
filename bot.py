@@ -267,16 +267,16 @@ def chat(message):
 
         score = 50
 
-               if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
-                   score += 20
+        if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
+            score += 20
 
-               if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
-                   score += 30
+        if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
+            score += 30
 
-                lead_data[chat_id]["score"] = score
+        lead_data[chat_id]["score"] = score
 
-               bot.reply_to(message, offer)
-                return
+        bot.reply_to(message, offer)
+        return
         
     elif step == "wait_contact":
             email_pattern = r"[^@]+@[^@]+\.[^@]+"
