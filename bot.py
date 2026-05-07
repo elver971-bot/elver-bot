@@ -47,7 +47,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
 user_memory = {}
-
 lead_state = {}
 lead_data = {}
 
@@ -119,9 +118,18 @@ SYSTEM_PROMPT = """
 
 @bot.message_handler(commands=["start"])
 def start(message):
+    chat_id = message.chat.id
+
+    lead_state[chat_id] = "wait_niche"
+    lead_data[chat_id] = {}
+
     bot.send_message(
-        message.chat.id,
-        "Здравствуйте 👋\n\nЯ Elver AI.\nПомогу понять, что можно автоматизировать в вашем бизнесе.\n\nНапишите, чем занимаетесь."
+        chat_id,
+        "Здравствуйте 👋\n\n"
+        "Я Elver AI.\n"
+        "Помогу понять, что можно автоматизировать в вашем бизнесе.\n\n"
+        "Чем вы занимаетесь?\n"
+        "Коротко: ниша / бизнес / направление."
     )
 
 
