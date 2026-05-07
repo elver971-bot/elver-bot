@@ -286,17 +286,19 @@ def chat(message):
                 if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
                     lead_data[chat_id]["contact"] = message.text
 
-                    supabase.table("leads").insert({
+                    result = supabase.table("leads").insert({
                         "name": message.from_user.first_name,
                         "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
                         "phone": message.text,
                         "chat_id": str(chat_id),
-                        "niche": lead_data[chat_id]["niche"],
-                        "pain": lead_data[chat_id]["pain"],
-                        "goal": lead_data[chat_id]["goal"],
-                        "score": lead_data[chat_id]["score"],
+                        "niche": lead_data[chat_id].get("niche", ""),
+                        "pain": lead_data[chat_id].get("pain", ""),
+                        "goal": lead_data[chat_id].get("goal", ""),
+                        "score": lead_data[chat_id].get("score", 0),
                         "status": "new"
                     }).execute()
+
+                    print(result)
 
                     bot.send_message(
                         1908342578,
