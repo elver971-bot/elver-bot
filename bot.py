@@ -279,9 +279,9 @@ def chat(message):
         return
         
         elif step == "wait_contact":
-           email_pattern = r"[^@]+@[^@]+\.[^@]+"
+            email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
-                if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
+             if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
 
                     lead_data[chat_id]["contact"] = message.text
 
