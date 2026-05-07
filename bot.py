@@ -325,14 +325,14 @@ def chat(message):
                     )
                     return
 
-        # запуск воронки
-        if text == "да":
-            lead_state[chat_id] = "wait_niche"
-            lead_data[chat_id] = {}
+         # запуск воронки
+         if text == "да" and chat_id not in lead_state:
+             lead_state[chat_id] = "wait_niche"
+             lead_data[chat_id] = {}
 
-            bot.reply_to(
-                message,
-                "Чем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
+             bot.reply_to(
+                 message,
+                 "Отлично 👌\n\nЧем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
             )
             return
 
