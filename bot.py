@@ -252,7 +252,7 @@ def chat(message):
                  pain = lead_data[chat_id]["pain"].lower()
                  goal = lead_data[chat_id]["goal"].lower()
 
-                    offer = (
+        offer = (
             "Для вашей задачи вижу хорошее решение:\n\n"
             "✅ усилить поток клиентов\n"
             "✅ автоматизировать обработку заявок\n"
