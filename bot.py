@@ -245,91 +245,91 @@ def chat(message):
                 return
 
             elif step == "wait_goal":
-                 lead_data[chat_id]["goal"] = message.text
-                 lead_state[chat_id] = "wait_contact"
+                lead_data[chat_id]["goal"] = message.text
+                lead_state[chat_id] = "wait_contact"
 
-                 niche = lead_data[chat_id]["niche"].lower()
-                 pain = lead_data[chat_id]["pain"].lower()
-                 goal = lead_data[chat_id]["goal"].lower()
+                pain = lead_data[chat_id]["pain"].lower()
+                goal = lead_data[chat_id]["goal"].lower()
 
-        offer = (
-            "Для вашей задачи вижу хорошее решение:\n\n"
-            "✅ усилить поток клиентов\n"
-            "✅ автоматизировать обработку заявок\n"
-            "✅ убрать ручную рутину\n\n"
-            "Под ваш бизнес можно собрать комплекс:\n"
-            "• продающий сайт / воронку\n"
-            "• рекламу\n"
-            "• AI-консультанта\n"
-            "• CRM + автоматизацию\n\n"
-            "Оставьте телефон или @username для связи 👌")
-
-        score = 50
-
-        if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
-            score += 20
-
-        if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
-            score += 30
-
-        lead_data[chat_id]["score"] = score
-
-        bot.reply_to(message, offer)
-        return
-        
-    elif step == "wait_contact":
-            email_pattern = r"[^@]+@[^@]+\.[^@]+"
-
-            if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
-                lead_data[chat_id]["contact"] = message.text
-
-                supabase.table("leads").insert({
-                    "name": message.from_user.first_name,
-                    "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
-                    "phone": message.text,
-                    "chat_id": str(chat_id),
-                    "niche": lead_data[chat_id]["niche"],
-                    "pain": lead_data[chat_id]["pain"],
-                    "goal": lead_data[chat_id]["goal"],
-                    "score": lead_data[chat_id]["score"],
-                    "status": "new"
-                }).execute()
-
-                bot.send_message(
-                    1908342578,
-                    f"🔥 Новый лид\n\n"
-                    f"Имя: {message.from_user.first_name}\n"
-                    f"Username: @{message.from_user.username}\n"
-                    f"Ниша: {lead_data[chat_id]['niche']}\n"
-                    f"Боль: {lead_data[chat_id]['pain']}\n"
-                    f"Цель: {lead_data[chat_id]['goal']}\n"
-                    f"Контакт: {message.text}"
+                offer = (
+                    "Для вашей задачи вижу хорошее решение:\n\n"
+                    "✅ усилить поток клиентов\n"
+                    "✅ автоматизировать обработку заявок\n"
+                    "✅ убрать ручную рутину\n\n"
+                    "Под ваш бизнес можно собрать комплекс:\n"
+                    "• продающий сайт / воронку\n"
+                    "• рекламу\n"
+                    "• AI-консультанта\n"
+                    "• CRM + автоматизацию\n\n"
+                    "Оставьте телефон / email / @username для связи 👌"
                 )
 
-                del lead_state[chat_id]
-                del lead_data[chat_id]
+                score = 50
 
-                bot.reply_to(
-                    message,
-                    "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным решением 🚀"
-                )
+                if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
+                    score += 20
+
+                if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
+                    score += 30
+
+                lead_data[chat_id]["score"] = score
+
+                bot.reply_to(message, offer)
                 return
 
-            else:
-                bot.reply_to(
-                    message,
-                    "Отправьте телефон / email / @username 👌"
-                )
-                return
+            elif step == "wait_contact":
+                email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
-         # запуск воронки
-         if text == "да" and chat_id not in lead_state:
-             lead_state[chat_id] = "wait_niche"
-             lead_data[chat_id] = {}
+                if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
+                    lead_data[chat_id]["contact"] = message.text
 
-             bot.reply_to(
-                 message,
-                 "Отлично 👌\n\nЧем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
+                    supabase.table("leads").insert({
+                        "name": message.from_user.first_name,
+                        "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
+                        "phone": message.text,
+                        "chat_id": str(chat_id),
+                        "niche": lead_data[chat_id]["niche"],
+                        "pain": lead_data[chat_id]["pain"],
+                        "goal": lead_data[chat_id]["goal"],
+                        "score": lead_data[chat_id]["score"],
+                        "status": "new"
+                    }).execute()
+
+                    bot.send_message(
+                        1908342578,
+                        f"🔥 Новый лид\n\n"
+                        f"Имя: {message.from_user.first_name}\n"
+                        f"Username: @{message.from_user.username}\n"
+                        f"Ниша: {lead_data[chat_id]['niche']}\n"
+                        f"Боль: {lead_data[chat_id]['pain']}\n"
+                        f"Цель: {lead_data[chat_id]['goal']}\n"
+                        f"Контакт: {message.text}"
+                    )
+
+                    del lead_state[chat_id]
+                    del lead_data[chat_id]
+
+                    bot.reply_to(
+                        message,
+                        "Принял 👌\n\nСпасибо. Я изучу задачу и свяжусь с вами с конкретным решением 🚀"
+                    )
+                    return
+
+                else:
+                    bot.reply_to(
+                        message,
+                        "Отправьте телефон / email / @username 👌"
+                    )
+                    return
+
+        # запуск воронки
+        if text == "да" and chat_id not in lead_state:
+            lead_state[chat_id] = "wait_niche"
+            lead_data[chat_id] = {}
+
+            bot.reply_to(
+                message,
+                "Отлично 👌\n\nЧем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
             )
             return
 
