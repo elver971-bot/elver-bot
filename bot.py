@@ -1,7 +1,5 @@
 import re
 import os
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from flask import Flask, request
 import telebot
 from openai import OpenAI
@@ -64,22 +62,6 @@ lead_words = [
     "заинтересован",
     "интересует"
 ]
-
-# чтобы Render видел открытый порт
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Bot is alive")
-
-    server = HTTPServer(("0.0.0.0", port), Handler)
-    server.serve_forever()
-
-
-threading.Thread(target=run_web, daemon=True).start()
 
 
 SYSTEM_PROMPT = """
@@ -220,4 +202,8 @@ def index():
     return 'Bot is running!', 200
 
 print("Webhook started")
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
