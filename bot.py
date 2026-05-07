@@ -349,9 +349,9 @@ def chat(message):
                        max_tokens=250,
                   )
 
-                 answer = response.choices[0].message.content
+                  answer = response.choices[0].message.content
 
-                 bot.reply_to(
+                  bot.reply_to(
                      message,
                      answer + "\n\nОставьте телефон / email / @username 👌"
                  )
