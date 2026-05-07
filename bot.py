@@ -347,15 +347,15 @@ def chat(message):
                        ],
                        temperature=0.7,
                        max_tokens=250,
-                  )
+                   )
 
-                  answer = response.choices[0].message.content
+                   answer = response.choices[0].message.content
 
-                  bot.reply_to(
-                     message,
-                     answer + "\n\nОставьте телефон / email / @username 👌"
-                  )
-                  return
+                   bot.reply_to(
+                       message,
+                       answer + "\n\nОставьте телефон / email / @username 👌"
+                   )
+                   return
 
         # запуск воронки
         if text == "да" and chat_id not in lead_state:
