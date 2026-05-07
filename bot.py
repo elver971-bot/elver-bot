@@ -341,13 +341,13 @@ def chat(message):
                                 )
                             },
                             {
-                               "role": "user",
-                               "content": message.text
+                                 "role": "user",
+                                 "content": message.text
                             }
-                       ],
-                       temperature=0.7,
-                       max_tokens=250,
-                   )
+                        ],
+                        temperature=0.7,
+                        max_tokens=250,
+                    )
 
                    answer = response.choices[0].message.content
 
