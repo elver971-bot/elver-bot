@@ -265,7 +265,7 @@ def chat(message):
             "Оставьте телефон или @username для связи 👌"
         )
 
-                score = 50
+        score = 50
 
                if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
                    score += 20
