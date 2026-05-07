@@ -245,12 +245,12 @@ def chat(message):
                 return
 
             elif step == "wait_goal":
-    lead_data[chat_id]["goal"] = message.text
-    lead_state[chat_id] = "wait_contact"
+                 lead_data[chat_id]["goal"] = message.text
+                 lead_state[chat_id] = "wait_contact"
 
-    niche = lead_data[chat_id]["niche"].lower()
-    pain = lead_data[chat_id]["pain"].lower()
-    goal = lead_data[chat_id]["goal"].lower()
+                 niche = lead_data[chat_id]["niche"].lower()
+                 pain = lead_data[chat_id]["pain"].lower()
+                 goal = lead_data[chat_id]["goal"].lower()
 
     offer = (
         "Для вашей задачи вижу хорошее решение:\n\n"
