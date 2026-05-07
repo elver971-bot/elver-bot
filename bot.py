@@ -278,7 +278,7 @@ def chat(message):
         bot.reply_to(message, offer)
         return
         
-                    elif step == "wait_goal":
+      elif step == "wait_goal":
             lead_data[chat_id]["goal"] = message.text
             lead_state[chat_id] = "wait_contact"
 
