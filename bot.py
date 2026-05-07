@@ -330,11 +330,32 @@ def chat(message):
                     return
 
                 else:
-                    bot.reply_to(
-                        message,
-                        "Отправьте телефон / email / @username 👌"
-                    )
-                    return
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": (
+                                    "Ответь коротко, по делу, как эксперт по автоматизации бизнеса. "
+                                    "После ответа мягко попроси контакт."
+                                )
+                            },
+                            {
+                               "role": "user",
+                               "content": message.text
+                            }
+                       ],
+                       temperature=0.7,
+                       max_tokens=250,
+                  )
+
+                 answer = response.choices[0].message.content
+
+                 bot.reply_to(
+                     message,
+                     answer + "\n\nОставьте телефон / email / @username 👌"
+                 )
+                 return
 
         # запуск воронки
         if text == "да" and chat_id not in lead_state:
