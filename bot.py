@@ -354,8 +354,8 @@ def chat(message):
                   bot.reply_to(
                      message,
                      answer + "\n\nОставьте телефон / email / @username 👌"
-                 )
-                 return
+                  )
+                  return
 
         # запуск воронки
         if text == "да" and chat_id not in lead_state:
