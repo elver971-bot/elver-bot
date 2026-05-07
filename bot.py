@@ -64,6 +64,15 @@ lead_words = [
     "готов",
     "заинтересован",
     "интересует"
+    "да",
+    "интересно",
+    "готов",
+    "ок",
+    "хорошо",
+    "давайте",
+    "можно",
+    "хочу",
+    "согласен",
 ]
 
 
@@ -114,7 +123,28 @@ SYSTEM_PROMPT = """
 Главная цель:
 выявить задачу клиента и довести до консультации Elver AI.
 """
+Жесткие правила:
 
+1) Никогда не предлагай созвон/встречу/звонок,
+если не получен контакт клиента.
+
+2) Если клиент заинтересован,
+сначала запроси:
+- телефон
+или
+- Telegram @username
+или
+- email
+
+3) Пока контакт не получен —
+не завершай диалог.
+
+4) После получения контакта —
+поблагодари и скажи,
+что подготовишь конкретное решение.
+
+5) Главная цель —
+взять контакт.
 
 @bot.message_handler(commands=["start"])
 def start(message):
@@ -202,7 +232,9 @@ def chat(message):
        return
 
             elif step == "wait_contact":
-                if re.search(phone_pattern, message.text) or "@" in message.text:
+               email_pattern = r"[^@]+@[^@]+\.[^@]+"
+
+                if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
 
                     lead_data[chat_id]["contact"] = message.text
 
