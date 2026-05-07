@@ -206,6 +206,7 @@ def chat(message):
                         "niche": lead_data[chat_id]["niche"],
                         "pain": lead_data[chat_id]["pain"],
                         "goal": lead_data[chat_id]["goal"],
+                        "score": lead_data[chat_id]["score"],
                         "status": "new"
                     }).execute()
 
