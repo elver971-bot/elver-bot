@@ -165,15 +165,15 @@ SYSTEM_PROMPT = """
 def start(message):
     chat_id = message.chat.id
 
-    # очистка прошлого диалога
+    # полная очистка прошлого диалога
+    if chat_id in user_memory:
+    del user_memory[chat_id]
+
     if chat_id in lead_state:
-        del lead_state[chat_id]
+    del lead_state[chat_id]
 
     if chat_id in lead_data:
-        del lead_data[chat_id]
-
-    if chat_id in user_memory:
-        del user_memory[chat_id]
+    del lead_data[chat_id]
 
     lead_state[chat_id] = "wait_niche"
     lead_data[chat_id] = {}
