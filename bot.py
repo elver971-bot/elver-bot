@@ -18,7 +18,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 user_memory = {}
-finished_leads = set()
+
 lead_state = {}
 lead_data = {}
 
@@ -164,6 +164,16 @@ SYSTEM_PROMPT = """
 @bot.message_handler(commands=["start"])
 def start(message):
     chat_id = message.chat.id
+
+    # очистка прошлого диалога
+    if chat_id in lead_state:
+        del lead_state[chat_id]
+
+    if chat_id in lead_data:
+        del lead_data[chat_id]
+
+    if chat_id in user_memory:
+        del user_memory[chat_id]
 
     lead_state[chat_id] = "wait_niche"
     lead_data[chat_id] = {}
@@ -348,10 +358,7 @@ def chat(message):
             return   
 
         # если проявил интерес
-        if (
-           any(word in text for word in lead_words)
-           and chat_id not in finished_leads
-     ):
+        if (any(word in text for word in lead_words)):
             bot.reply_to(
                 message,
                 "Готовы начать диагностику?\n\nНапишите: да"
