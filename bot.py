@@ -280,7 +280,7 @@ def chat(message):
                         "segment": lead_data[chat_id].get("segment", "other"),
                         "priority": lead_data[chat_id].get("priority", "Normal"),
                         "offer_type": lead_data[chat_id].get("offer_type", "standard"),
-                    }).execute()
+                    }).eq("chat_id", str(chat_id)).execute()
 
                     bot.send_message(
                         1908342578,
