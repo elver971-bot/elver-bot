@@ -415,5 +415,8 @@ send_followups()
 print("Webhook started")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    if os.getenv("MODE") == "followup":
+        send_followups()
+    else:
+        port = int(os.environ.get("PORT", 10000))
+        app.run(host="0.0.0.0", port=port)
