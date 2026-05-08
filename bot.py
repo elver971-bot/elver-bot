@@ -184,6 +184,17 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
+        if any(word in text for word in price_words):
+            bot.reply_to(
+                message,
+                "Стоимость зависит от задачи.\n\n"
+                "Для бизнеса внедрение обычно начинается от 25 000 ₽.\n"
+                "Если подключать CRM, AI-консультанта и автоворонку — выше, но и результат сильнее.\n\n"
+                "Оставьте телефон / email / @username 👌\n"
+                "Подготовлю точный расчет под вашу нишу."
+            )
+            return
+
         phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
@@ -340,7 +351,7 @@ def chat(message):
         if (
            any(word in text for word in lead_words)
            and chat_id not in finished_leads
-        ):
+     ):
             bot.reply_to(
                 message,
                 "Готовы начать диагностику?\n\nНапишите: да"
