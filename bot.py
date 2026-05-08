@@ -366,7 +366,8 @@ def index():
     return "Bot is running!", 200
 
 def send_followups():
-    now = datetime.utcnow()
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
 
     rows = (
         supabase.table("leads")
@@ -380,7 +381,7 @@ def send_followups():
             continue
 
         last = datetime.fromisoformat(
-            lead["last_message_at"].replace("Z", "")
+            lead["last_message_at"].replace("Z", "+00:00")
         )
 
         diff = now - last
