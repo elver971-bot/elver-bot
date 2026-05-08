@@ -309,7 +309,7 @@ def chat(message):
 
                     del lead_state[chat_id]
                     del lead_data[chat_id]
-                    finished_leads.add(chat_id)
+                    
 
                     bot.reply_to(
                         message,
