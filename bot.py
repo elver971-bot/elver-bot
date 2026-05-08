@@ -21,6 +21,65 @@ user_memory = {}
 finished_leads = set()
 lead_state = {}
 lead_data = {}
+def detect_segment(niche_text):
+    niche = niche_text.lower()
+
+    clinic_words = [
+        "стомат", "клиник", "медицин", "врач",
+        "ортодонт", "имплант", "косметолог"
+    ]
+
+    estate_words = [
+        "недвиж", "риелтор", "агентство",
+        "застройщик", "квартира", "жилье"
+    ]
+
+    warm_words = [
+        "юрист", "бухгалтер", "салон",
+        "автосервис", "обучение", "школа"
+    ]
+
+    if any(word in niche for word in clinic_words):
+        return "clinic", "VIP", "medical"
+
+    if any(word in niche for word in estate_words):
+        return "real_estate", "VIP", "estate"
+
+    if any(word in niche for word in warm_words):
+        return "service", "Warm", "standard"
+
+    return "other", "Normal", "standard"
+
+
+def make_offer(segment):
+    if segment == "clinic":
+        return (
+            "Вижу точки роста:\n\n"
+            "✅ запись пациентов 24/7\n"
+            "✅ возврат потерянных пациентов\n"
+            "✅ напоминания о приеме\n"
+            "✅ AI-консультант для записи\n\n"
+            "Оставьте телефон / email / @username 👌"
+        )
+
+    if segment == "real_estate":
+        return (
+            "Для недвижимости можно усилить:\n\n"
+            "✅ квалификацию лидов\n"
+            "✅ подбор объектов через AI\n"
+            "✅ запись на просмотр\n"
+            "✅ CRM + автоворонка\n\n"
+            "Оставьте телефон / email / @username 👌"
+        )
+
+    return (
+        "Для вашей задачи вижу решение:\n\n"
+        "✅ поток заявок\n"
+        "✅ автоматизация обработки\n"
+        "✅ AI-консультант\n"
+        "✅ CRM + автоворонка\n\n"
+        "Оставьте телефон / email / @username 👌"
+    )
 
 lead_words = [
     "интересно",
@@ -121,6 +180,12 @@ def chat(message):
 
             if step == "wait_goal":
                 lead_data[chat_id]["goal"] = message.text
+                segment, priority, offer_type = detect_segment(
+                    lead_data[chat_id]["niche"]
+                )
+                lead_data[chat_id]["segment"] = segment
+                lead_data[chat_id]["priority"] = priority
+                lead_data[chat_id]["offer_type"] = offer_type
                 lead_state[chat_id] = "wait_contact"
 
                 pain = lead_data[chat_id]["pain"].lower()
@@ -149,18 +214,12 @@ def chat(message):
 
                 lead_data[chat_id]["score"] = score
 
+                offer = make_offer(segment)
+
                 bot.reply_to(
                     message,
-                    "Для вашей задачи вижу хорошее решение:\n\n"
-                    "✅ усилить поток клиентов\n"
-                    "✅ автоматизировать обработку заявок\n"
-                    "✅ убрать ручную рутину\n\n"
-                    "Под ваш бизнес можно собрать комплекс:\n"
-                    "• продающий сайт / воронку\n"
-                    "• рекламу\n"
-                    "• AI-консультанта\n"
-                    "• CRM + автоматизацию\n\n"
-                    "Оставьте телефон / email / @username 👌"
+                    offer
+                    
                 )
                 return
 
@@ -179,12 +238,16 @@ def chat(message):
                         "pain": lead_data[chat_id].get("pain", ""),
                         "goal": lead_data[chat_id].get("goal", ""),
                         "score": lead_data[chat_id].get("score", 0),
-                        "status": "new"
+                        "status": "new",
+                        "segment": lead_data[chat_id].get("segment", "other"),
+                        "priority": lead_data[chat_id].get("priority", "Normal"),
+                        "offer_type": lead_data[chat_id].get("offer_type", "standard"),
                     }).execute()
 
                     bot.send_message(
                         1908342578,
-                        f"🔥 Новый лид\n\n"
+                        f"🔥 {lead_data[chat_id]['priority']} LEAD\n\n"
+                        f"Сегмент: {lead_data[chat_id]['segment']}\n"
                         f"Имя: {message.from_user.first_name}\n"
                         f"Username: @{message.from_user.username}\n"
                         f"Ниша: {lead_data[chat_id]['niche']}\n"
