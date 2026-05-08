@@ -21,6 +21,19 @@ user_memory = {}
 finished_leads = set()
 lead_state = {}
 lead_data = {}
+
+def save_followup(chat_id, message, step):
+    supabase.table("leads").upsert({
+        "chat_id": str(chat_id),
+        "name": message.from_user.first_name or "Без имени",
+        "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
+        "niche": lead_data.get(chat_id, {}).get("niche", ""),
+        "goal": lead_data.get(chat_id, {}).get("goal", ""),
+        "status": step,
+        "followup_sent": False,
+        "last_message_at": datetime.utcnow().isoformat()
+    }).execute() 
+
 def detect_segment(niche_text):
     niche = niche_text.lower()
 
@@ -213,6 +226,7 @@ def chat(message):
                     score += 30
 
                 lead_data[chat_id]["score"] = score
+                save_followup(chat_id, message, "wait_contact")
 
                 offer = make_offer(segment)
 
@@ -246,14 +260,16 @@ def chat(message):
 
                     bot.send_message(
                         1908342578,
-                        f"🔥 {lead_data[chat_id]['priority']} LEAD\n\n"
-                        f"Сегмент: {lead_data[chat_id]['segment']}\n"
-                        f"Имя: {message.from_user.first_name}\n"
-                        f"Username: @{message.from_user.username}\n"
-                        f"Ниша: {lead_data[chat_id]['niche']}\n"
-                        f"Боль: {lead_data[chat_id]['pain']}\n"
-                        f"Цель: {lead_data[chat_id]['goal']}\n"
-                        f"Контакт: {message.text}"
+                      f"🔥 Новый лид\n\n"
+                      f"Приоритет: {lead_data[chat_id]['priority']}\n"
+                      f"Сегмент: {lead_data[chat_id]['offer_type']}\n"
+                      f"Score: {lead_data[chat_id]['score']}\n\n"
+                      f"Имя: {message.from_user.first_name}\n"
+                      f"Username: @{message.from_user.username}\n"
+                      f"Ниша: {lead_data[chat_id]['niche']}\n"
+                      f"Боль: {lead_data[chat_id]['pain']}\n"
+                      f"Цель: {lead_data[chat_id]['goal']}\n"
+                      f"Контакт: {message.text}"  
                     )
 
                     del lead_state[chat_id]
@@ -349,7 +365,52 @@ def webhook():
 def index():
     return "Bot is running!", 200
 
+def send_followups():
+    now = datetime.utcnow()
 
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .eq("followup_sent", False)
+        .execute()
+    )
+
+    for lead in rows.data:
+        if not lead.get("last_message_at"):
+            continue
+
+        last = datetime.fromisoformat(
+            lead["last_message_at"].replace("Z", "")
+        )
+
+        diff = now - last
+
+        text = None
+
+        if diff >= timedelta(hours=24):
+            text = (
+                "Подготовил ещё несколько идей по автоматизации "
+                "под ваш бизнес.\n\n"
+                "Если задача актуальна — напишите 👌"
+            )
+
+        elif diff >= timedelta(hours=2):
+            text = (
+                "Уже вижу, где можно увеличить заявки "
+                "и убрать ручную рутину.\n\n"
+                "Если актуально — оставьте контакт 👌"
+            )
+
+        if text:
+            try:
+                bot.send_message(int(lead["chat_id"]), text)
+
+                supabase.table("leads").update({
+                    "followup_sent": True
+                }).eq("chat_id", lead["chat_id"]).execute()
+
+            except:
+                pass
 print("Webhook started")
 
 if __name__ == "__main__":
