@@ -1,55 +1,24 @@
 import re
 import os
+from datetime import datetime
+
 from flask import Flask, request
 import telebot
 from openai import OpenAI
-from datetime import datetime
 from supabase import create_client
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-
-def save_lead(message):
-    username = (
-        f"@{message.from_user.username}"
-        if message.from_user.username
-        else "нет"
-    )
-
-    name = message.from_user.first_name or "Без имени"
-    text = message.text
-    date = datetime.now().strftime("%d.%m.%Y %H:%M")
-
-    # запись в Supabase
-    supabase.table("leads").insert({
-        "name": name,
-        "username": username,
-        "phone": text,
-        "chat_id": str(message.chat.id)
-    }).execute()
-
-    # уведомление тебе
-    bot.send_message(
-        1908342578,
-        f"🔥 Новый лид\n\n"
-        f"Имя: {name}\n"
-        f"Username: {username}\n"
-        f"Контакт: {text}\n"
-        f"Дата: {date}"
-    )
-
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 user_memory = {}
 finished_leads = set()
-
 lead_state = {}
 lead_data = {}
 
@@ -66,136 +35,35 @@ lead_words = [
     "нужна",
     "готов",
     "заинтересован",
-    "интересует"
+    "интересует",
     "да",
-    "интересно",
-    "готов",
     "ок",
     "хорошо",
-    "давайте",
     "можно",
-    "хочу",
     "согласен",
 ]
-
 
 SYSTEM_PROMPT = """
 Ты — Elver AI.
 Эксперт по автоматизации бизнеса, продаж и внедрению AI.
 
-ТВОЯ ГЛАВНАЯ ЦЕЛЬ:
-взять контакт клиента:
+Главная цель:
+получить контакт клиента:
 - телефон
-или
 - Telegram @username
-или
 - email
 
-ЖЕСТКИЕ ПРАВИЛА:
+Если клиент проявил интерес —
+сначала возьми контакт.
 
-1) Никогда не предлагай:
-- созвон
-- звонок
-- встречу
-- консультацию
-- "когда удобно"
-- "во сколько созвон"
-- "оставьте время"
-
-если контакт клиента еще не получен.
-
-2) Если клиент проявил интерес —
-сначала получи контакт.
-
-3) Пока контакт не получен —
-не завершай диалог.
-
-4) Если клиент отвечает уклончиво —
-мягко возвращай к получению контакта.
-
-Примеры:
-"Чтобы подготовить решение под ваш бизнес,
-оставьте телефон / Telegram @username / email 👌"
-
-или
-
-"Смогу предложить конкретную схему.
-Оставьте контакт для связи 👌"
-
-или
-
-"Нужен контакт, чтобы отправить решение:
-телефон / @username / email 👌"
-
-5) После получения контакта:
-поблагодари,
-скажи что подготовишь решение,
-и заверши диалог.
-
---------------------------------
-
-ЛОГИКА ОБЩЕНИЯ:
-
-Шаг 1:
-понять нишу клиента.
-
-Шаг 2:
-найти боль / проблему.
-
-Шаг 3:
-понять цель.
-
-Шаг 4:
-показать выгоду автоматизации.
-
-Шаг 5:
-взять контакт.
-
---------------------------------
-
-КАК ОТВЕЧАТЬ:
-
+Отвечай:
 - коротко
-- уверенно
 - по делу
 - экспертно
 - дружелюбно
-- без воды
-- без канцелярита
-- 1 вопрос за сообщение
-
---------------------------------
-
-ЕСЛИ КЛИЕНТ ПРО УСЛУГИ:
-делай акцент:
-- скорость ответа
-- заявки
-- продажи
-- автоматизация
-
-ЕСЛИ КЛИЕНТ ПРО МАГАЗИН:
-делай акцент:
-- поток заявок
-- повторные продажи
-- CRM
-- возврат клиентов
-
-ЕСЛИ КЛИЕНТ ПРО ЛОКАЛЬНЫЙ БИЗНЕС:
-делай акцент:
-- запись
-- заявки
-- напоминания
-- снижение потерь клиентов
-
---------------------------------
-
-Никогда не начинай разговор заново,
-если диалог уже идет.
-
-Помни:
-твоя задача —
-довести до контакта.
+- один вопрос за сообщение
 """
+
 
 @bot.message_handler(commands=["start"])
 def start(message):
@@ -221,10 +89,10 @@ def chat(message):
         text = message.text.lower()
 
         phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
+        email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
-        # если человек в воронке
+        # если человек уже в воронке
         if chat_id in lead_state:
-
             step = lead_state[chat_id]
 
             if step == "wait_niche":
@@ -233,11 +101,15 @@ def chat(message):
 
                 bot.reply_to(
                     message,
-                    "Что сейчас больше всего мешает росту?\n\nНапример:\n— мало заявок\n— дорого стоит реклама\n— слабые продажи"
+                    "Что сейчас больше всего мешает росту?\n\n"
+                    "Например:\n"
+                    "— мало заявок\n"
+                    "— дорогая реклама\n"
+                    "— слабые продажи"
                 )
                 return
 
-            elif step == "wait_pain":
+            if step == "wait_pain":
                 lead_data[chat_id]["pain"] = message.text
                 lead_state[chat_id] = "wait_goal"
 
@@ -247,14 +119,38 @@ def chat(message):
                 )
                 return
 
-            elif step == "wait_goal":
+            if step == "wait_goal":
                 lead_data[chat_id]["goal"] = message.text
                 lead_state[chat_id] = "wait_contact"
 
                 pain = lead_data[chat_id]["pain"].lower()
                 goal = lead_data[chat_id]["goal"].lower()
 
-                offer = (
+                score = 50
+
+                if any(word in pain for word in [
+                    "нет заявок",
+                    "мало клиентов",
+                    "дорого",
+                    "ручной",
+                    "долго",
+                    "теряем",
+                ]):
+                    score += 20
+
+                if any(word in goal for word in [
+                    "рост",
+                    "заявки",
+                    "автоматизация",
+                    "масштаб",
+                    "продажи",
+                ]):
+                    score += 30
+
+                lead_data[chat_id]["score"] = score
+
+                bot.reply_to(
+                    message,
                     "Для вашей задачи вижу хорошее решение:\n\n"
                     "✅ усилить поток клиентов\n"
                     "✅ автоматизировать обработку заявок\n"
@@ -264,30 +160,18 @@ def chat(message):
                     "• рекламу\n"
                     "• AI-консультанта\n"
                     "• CRM + автоматизацию\n\n"
-                    "Оставьте телефон / email / @username для связи 👌"
+                    "Оставьте телефон / email / @username 👌"
                 )
-
-                score = 50
-
-                if any(word in pain for word in ["нет заявок", "мало клиентов", "дорого", "ручной", "долго", "теряем"]):
-                    score += 20
-
-                if any(word in goal for word in ["рост", "заявки", "автоматизация", "масштаб", "продажи"]):
-                    score += 30
-
-                lead_data[chat_id]["score"] = score
-
-                bot.reply_to(message, offer)
                 return
 
-            elif step == "wait_contact":
-                email_pattern = r"[^@]+@[^@]+\.[^@]+"
-
-                if re.search(phone_pattern, message.text) or re.search(email_pattern, message.text) or "@" in message.text:
-                    lead_data[chat_id]["contact"] = message.text
-
-                    result = supabase.table("leads").insert({
-                        "name": message.from_user.first_name,
+            if step == "wait_contact":
+                if (
+                    re.search(phone_pattern, message.text)
+                    or re.search(email_pattern, message.text)
+                    or "@" in message.text
+                ):
+                    supabase.table("leads").insert({
+                        "name": message.from_user.first_name or "Без имени",
                         "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
                         "phone": message.text,
                         "chat_id": str(chat_id),
@@ -297,8 +181,6 @@ def chat(message):
                         "score": lead_data[chat_id].get("score", 0),
                         "status": "new"
                     }).execute()
-
-                    print(result)
 
                     bot.send_message(
                         1908342578,
@@ -313,49 +195,20 @@ def chat(message):
 
                     del lead_state[chat_id]
                     del lead_data[chat_id]
-
                     finished_leads.add(chat_id)
 
                     bot.reply_to(
                         message,
                         "Принял 👌\n\n"
-                        "Спасибо.\n\n"
-                        "Уже вижу несколько вариантов решения:\n"
-                        "• усилить поток заявок\n"
-                        "• продающую воронку\n"
-                        "• AI-консультанта\n"
-                        "• CRM + автоматизацию\n\n"
-                        "Подготовлю конкретное предложение по срокам и стоимости и свяжусь с вами 🚀"
-                   )
+                        "Подготовлю конкретное предложение и свяжусь с вами 🚀"
+                    )
                     return
 
-                else:
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": (
-                                    "Ответь коротко, по делу, как эксперт по автоматизации бизнеса. "
-                                    "После ответа мягко попроси контакт."
-                                )
-                            },
-                            {
-                                 "role": "user",
-                                 "content": message.text
-                            }
-                        ],
-                        temperature=0.7,
-                        max_tokens=250,
-                    )
-
-                   answer = response.choices[0].message.content
-
-                   bot.reply_to(
-                       message,
-                       answer + "\n\nОставьте телефон / email / @username 👌"
-                   )
-                   return
+                bot.reply_to(
+                    message,
+                    "Нужен контакт для связи:\nтелефон / email / @username 👌"
+                )
+                return
 
         # запуск воронки
         if text == "да" and chat_id not in lead_state:
@@ -364,7 +217,9 @@ def chat(message):
 
             bot.reply_to(
                 message,
-                "Отлично 👌\n\nЧем вы занимаетесь?\nКоротко: ниша / бизнес / направление."
+                "Отлично 👌\n\n"
+                "Чем вы занимаетесь?\n"
+                "Коротко: ниша / бизнес / направление."
             )
             return
 
@@ -374,6 +229,10 @@ def chat(message):
             and chat_id not in lead_state
             and chat_id not in finished_leads
         ):
+            bot.reply_to(
+                message,
+                "Готовы начать диагностику?\n\nНапишите: да"
+            )
             return
 
         # обычный AI чат
@@ -382,9 +241,10 @@ def chat(message):
                 {"role": "system", "content": SYSTEM_PROMPT}
             ]
 
-        user_memory[chat_id].append(
-            {"role": "user", "content": message.text}
-        )
+        user_memory[chat_id].append({
+            "role": "user",
+            "content": message.text
+        })
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -395,17 +255,16 @@ def chat(message):
 
         answer = response.choices[0].message.content
 
-        user_memory[chat_id].append(
-            {"role": "assistant", "content": answer}
-        )
+        user_memory[chat_id].append({
+            "role": "assistant",
+            "content": answer
+        })
 
         bot.reply_to(message, answer)
 
     except Exception as e:
         bot.reply_to(message, f"Ошибка AI: {e}")
 
-
-from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -414,20 +273,22 @@ WEBHOOK_URL = "https://elver-bot.onrender.com/" + BOT_TOKEN
 bot.remove_webhook()
 bot.set_webhook(url=WEBHOOK_URL)
 
-@app.route('/' + BOT_TOKEN, methods=['POST'])
+
+@app.route("/" + BOT_TOKEN, methods=["POST"])
 def webhook():
-    json_str = request.get_data().decode('UTF-8')
+    json_str = request.get_data().decode("UTF-8")
     update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
-    return 'ok', 200
+    return "ok", 200
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return 'Bot is running!', 200
+    return "Bot is running!", 200
+
 
 print("Webhook started")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-
