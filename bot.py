@@ -267,7 +267,7 @@ def chat(message):
                     or re.search(email_pattern, message.text)
                     or "@" in message.text
                 ):
-                    supabase.table("leads").insert({
+                    supabase.table("leads").update({
                         "name": message.from_user.first_name or "Без имени",
                         "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
                         "phone": message.text,
