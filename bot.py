@@ -325,7 +325,7 @@ def chat(message):
                 "Коротко: ниша / бизнес / направление."
             )
             return
-        if any(word in text for word in price_words):
+        if any(word in text for word in price_words) and chat_id not in lead_state:
             bot.reply_to(
                message,
                "Стоимость зависит от задачи.\n\n"
@@ -338,9 +338,8 @@ def chat(message):
 
         # если проявил интерес
         if (
-            any(word in text for word in lead_words)
-            and chat_id not in lead_state
-            and chat_id not in finished_leads
+           any(word in text for word in lead_words)
+           and chat_id not in finished_leads
         ):
             bot.reply_to(
                 message,
