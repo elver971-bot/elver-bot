@@ -523,12 +523,31 @@ Summary:
             # else:
             
             if chat_id not in user_memory:
-                user_memory[chat_id] = [
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT + "\n\n" + lead_info
-                    }
-                ]
+
+                restored_history = None
+
+                if lead.data:
+                    db_lead = lead.data[0]
+                    restored_history = db_lead.get("ai_history")
+
+                if restored_history:
+                    try:
+                        user_memory[chat_id] = eval(restored_history)
+                    except:
+                        user_memory[chat_id] = [
+                            {
+                                "role": "system",
+                                "content": SYSTEM_PROMPT + "\n\n" + lead_info
+                            }
+                        ]
+
+                else:
+                    user_memory[chat_id] = [
+                        {
+                            "role": "system",
+                            "content": SYSTEM_PROMPT + "\n\n" + lead_info
+                        }
+                    ]
 
             user_memory[chat_id].append({
                 "role": "user",
@@ -634,7 +653,17 @@ Summary:
                 "role": "assistant",
                 "content": answer
             })
+            try:
+                history_text = str(user_memory[chat_id])
 
+                supabase.table("leads").update({
+                    "ai_history": history_text,
+                    "last_message_at": datetime.utcnow().isoformat()
+                }).eq("chat_id", str(chat_id)).execute()
+
+            except Exception as save_error:
+                print("History save error:", save_error)
+           
             bot.reply_to(message, answer)
             return
         
