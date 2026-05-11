@@ -31,6 +31,7 @@ def save_followup(chat_id, message, step):
         "goal": lead_data.get(chat_id, {}).get("goal", ""),
         "status": step,
         "followup_sent": False,
+        "followup_step": 0,
         "last_message_at": datetime.utcnow().isoformat()
     }).execute() 
 
@@ -734,16 +735,17 @@ def index():
 
 def send_followups():
     from datetime import timezone
+
     now = datetime.now(timezone.utc)
 
     rows = (
         supabase.table("leads")
         .select("*")
-        .eq("followup_sent", False)
         .execute()
     )
 
     for lead in rows.data:
+
         if not lead.get("last_message_at"):
             continue
 
@@ -752,29 +754,64 @@ def send_followups():
         )
 
         diff = now - last
+        step = lead.get("followup_step", 0)
 
         text = None
+        next_step = step
 
-        if diff >= timedelta(hours=24):
+        # 2 часа
+        if step == 0 and diff >= timedelta(hours=2):
+
             text = (
-                "Подготовил ещё несколько идей по автоматизации "
+                "Посмотрел вашу задачу 👌\n\n"
+                "Уже вижу несколько вариантов, "
+                "как сократить ручную работу "
+                "и ускорить обработку заявок.\n\n"
+                "Если актуально — напишите."
+            )
+
+            next_step = 1
+
+        # 24 часа
+        elif step == 1 and diff >= timedelta(hours=24):
+
+            text = (
+                "Подготовил еще идеи по автоматизации "
                 "под ваш бизнес.\n\n"
-                "Если задача актуальна — напишите 👌"
+                "Можно внедрить CRM, AI-ассистента "
+                "и автоматический сбор заявок "
+                "в одну систему.\n\n"
+                "Если интересно — могу показать пример."
             )
 
-        elif diff >= timedelta(hours=2):
+            next_step = 2
+
+        # 3 дня
+        elif step == 2 and diff >= timedelta(days=3):
+
             text = (
-                "Уже вижу, где можно увеличить заявки "
-                "и убрать ручную рутину.\n\n"
-                "Если актуально — оставьте контакт 👌"
+                "Часто компании теряют заявки "
+                "из-за ручной обработки.\n\n"
+                "Автоматизация обычно окупается "
+                "довольно быстро за счет скорости "
+                "обработки клиентов.\n\n"
+                "Если хотите — подготовлю пример "
+                "под вашу нишу 👌"
             )
+
+            next_step = 3
 
         if text:
+
             try:
-                bot.send_message(int(lead["chat_id"]), text)
+
+                bot.send_message(
+                    int(lead["chat_id"]),
+                    text
+                )
 
                 supabase.table("leads").update({
-                    "followup_sent": True
+                    "followup_step": next_step
                 }).eq("chat_id", lead["chat_id"]).execute()
 
             except:
