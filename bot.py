@@ -477,7 +477,7 @@ def chat(message):
         })
 
         response = client.chat.completions.create(
-            model="gpt-5o-mini",
+            model="gpt-4.1-mini",
             messages=user_memory[chat_id],
             temperature=0.4,
             max_tokens=250,
