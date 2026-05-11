@@ -409,38 +409,41 @@ def chat(message):
     #                 return
     
             # else:
-                if chat_id not in user_memory:
-                    user_memory[chat_id] = [
-                        {"role": "system", "content": SYSTEM_PROMPT}
-                    ]
+            if chat_id not in user_memory:
+                user_memory[chat_id] = [
+                    {"role": "system", "content": SYSTEM_PROMPT}
+                ]
 
-                user_memory[chat_id].append({
-                    "role": "user",
-                    "content": message.text
-                })
+            user_memory[chat_id].append({
+                "role": "user",
+                "content": message.text
+            })
 
-                if len(user_memory[chat_id]) > 30:
-                    user_memory[chat_id] = (
-                        [user_memory[chat_id][0]]
-                        + user_memory[chat_id][-11:]
-    )
-
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=user_memory[chat_id],
-                    temperature=0.5,
-                    max_tokens=500,
+            if len(user_memory[chat_id]) > 30:
+                user_memory[chat_id] = (
+                    [user_memory[chat_id][0]]
+                    + user_memory[chat_id][-11:]
                 )
 
-                answer = response.choices[0].message.content
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=user_memory[chat_id],
+                temperature=0.5,
+                max_tokens=500,
+            )
 
-                user_memory[chat_id].append({
-                    "role": "assistant",
-                    "content": answer
-                })
+            answer = response.choices[0].message.content
 
-                bot.reply_to(message, answer)
-                return
+            if len(answer) > 2000:
+                answer = answer[:2000]
+
+            user_memory[chat_id].append({
+                "role": "assistant",
+                "content": answer
+            })
+
+            bot.reply_to(message, answer)
+            return
         
                
 
