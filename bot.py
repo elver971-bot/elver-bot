@@ -568,6 +568,74 @@ Summary:
             )
 
             answer = response.choices[0].message.content
+            
+            brief_prompt = f"""
+            Сделай краткую CRM-сводку клиента.
+
+            Сообщения:
+            {message.text}
+
+            Ответ AI:
+            {answer}
+
+            Нужен ответ строго в формате:
+
+            STAGE:
+            BRIEF:
+            NEXT:
+
+            Где:
+
+            STAGE = cold / warm / hot
+
+            BRIEF = кратко о клиенте
+
+            NEXT = следующий шаг продажи
+            """
+
+            try:
+                brief_response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Ты CRM AI аналитик."
+                        },
+                        {
+                            "role": "user",
+                            "content": brief_prompt
+                        }
+                    ],
+                    temperature=0.2,
+                    max_tokens=150
+                )
+
+                brief_text = brief_response.choices[0].message.content
+
+                ai_stage = "cold"
+                ai_brief = ""
+                ai_next_step = ""
+
+                for line in brief_text.split("\n"):
+
+                    if line.startswith("STAGE:"):
+                        ai_stage = line.replace("STAGE:", "").strip()
+
+                    elif line.startswith("BRIEF:"):
+                        ai_brief = line.replace("BRIEF:", "").strip()
+
+                    elif line.startswith("NEXT:"):
+                        ai_next_step = line.replace("NEXT:", "").strip()
+
+                supabase.table("leads").update({
+                    "ai_stage": ai_stage,
+                    "ai_brief": ai_brief,
+                    "ai_next_step": ai_next_step
+                }).eq("chat_id", str(chat_id)).execute()
+
+            except Exception as brief_error:
+                print("Brief error:", brief_error)
+            
             score = 0
 
             text_all = (
