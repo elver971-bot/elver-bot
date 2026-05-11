@@ -385,14 +385,14 @@ def chat(message):
             db_lead = lead.data[0]
 
             lead_info = f"""
-        Ниша: {db_lead.get('niche', '')}
-        Боль: {db_lead.get('pain', '')}
-        Цель: {db_lead.get('goal', '')}
-        Этап: {db_lead.get('stage', '')}
+Ниша: {db_lead.get('niche', '')}
+Боль: {db_lead.get('pain', '')}
+Цель: {db_lead.get('goal', '')}
+Этап: {db_lead.get('stage', '')}
 
-        Summary:
-        {db_lead.get('summary', '')}
-        """
+Summary:
+{db_lead.get('summary', '')}
+"""
        
         phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
