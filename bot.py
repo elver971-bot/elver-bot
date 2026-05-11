@@ -587,7 +587,7 @@ def chat(message):
             )
                
             elif score >= 40:
-            lead_temp = "warm"  
+                lead_temp = "warm"  
 
             supabase.table("leads").update({
                 "lead_score": score,
