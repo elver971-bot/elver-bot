@@ -578,7 +578,7 @@ def chat(message):
             if score >= 70:
                 lead_temp = "hot"
 
-             bot.send_message(
+            bot.send_message(
                 1908342578,
                 f"🔥 ГОРЯЧИЙ ЛИД\n\n"
                 f"Клиент: {message.from_user.first_name}\n"
