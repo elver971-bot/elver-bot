@@ -306,8 +306,8 @@ def chat(message):
                       f"Контакт: {message.text}"  
                     )
 
-                    del lead_state[chat_id]
-                    del lead_data[chat_id]
+                    # del lead_state[chat_id]
+                    # del lead_data[chat_id]
                     
 
                     bot.reply_to(
@@ -327,6 +327,12 @@ def chat(message):
                     "role": "user",
                     "content": message.text
                 })
+
+                if len(user_memory[chat_id]) > 12:
+                    user_memory[chat_id] = (
+                        [user_memory[chat_id][0]]
+                        + user_memory[chat_id][-11:]
+    )
 
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
