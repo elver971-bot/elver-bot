@@ -519,6 +519,82 @@ def chat(message):
             )
 
             answer = response.choices[0].message.content
+            score = 0
+
+            text_all = (
+                lead_info.lower()
+                + " "
+                + message.text.lower()
+                + " "
+                + answer.lower()
+            )
+
+            # бюджет
+            if any(word in text_all for word in [
+                "бюджет",
+                "250",
+                "500",
+                "миллион",
+                "тысяч"
+            ]):
+                score += 25
+
+            # срочность
+            if any(word in text_all for word in [
+                "сегодня",
+                "срочно",
+                "быстро",
+                "сейчас",
+                "готов"
+            ]):
+                score += 25
+
+            # внедрение
+            if any(word in text_all for word in [
+                "внедрение",
+                "crm",
+                "ai",
+                "автоматизация"
+            ]):
+                score += 20
+
+            # объем
+            if any(word in text_all for word in [
+                "заявок",
+                "сотрудников",
+                "лидов"
+            ]):
+                score += 15
+
+            # контакт
+            if (
+                re.search(phone_pattern, message.text)
+                or "@" in message.text
+            ):
+                score += 30
+
+            lead_temp = "cold"
+
+            if score >= 70:
+                lead_temp = "hot"
+
+             bot.send_message(
+                1908342578,
+                f"🔥 ГОРЯЧИЙ ЛИД\n\n"
+                f"Клиент: {message.from_user.first_name}\n"
+                f"Score: {score}\n"
+                f"Сообщение: {message.text}"
+            )
+               
+            elif score >= 40:
+            lead_temp = "warm"  
+
+            supabase.table("leads").update({
+                "lead_score": score,
+                "lead_temp": lead_temp
+            }).eq("chat_id", str(chat_id)).execute()    
+
+
 
             if len(answer) > 2000:
                 answer = answer[:2000]
