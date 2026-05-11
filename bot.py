@@ -578,21 +578,22 @@ def chat(message):
             if score >= 70:
                 lead_temp = "hot"
 
-            bot.send_message(
-                1908342578,
-                f"🔥 ГОРЯЧИЙ ЛИД\n\n"
-                f"Клиент: {message.from_user.first_name}\n"
-                f"Score: {score}\n"
-                f"Сообщение: {message.text}"
-            )
-               
+                bot.send_message(
+                    1908342578,
+                    f"🔥 ГОРЯЧИЙ ЛИД\n\n"
+                    f"Клиент: {message.from_user.first_name}\n"
+                    f"Score: {score}\n"
+                    f"Сообщение: {message.text}"
+                )
+
             elif score >= 40:
-                lead_temp = "warm"  
+                lead_temp = "warm"
+
 
             supabase.table("leads").update({
                 "lead_score": score,
                 "lead_temp": lead_temp
-            }).eq("chat_id", str(chat_id)).execute()    
+            }).eq("chat_id", str(chat_id)).execute()  
 
 
 
