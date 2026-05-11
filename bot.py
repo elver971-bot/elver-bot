@@ -477,10 +477,10 @@ def chat(message):
         })
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5o-mini",
             messages=user_memory[chat_id],
             temperature=0.4,
-            max_tokens=500,
+            max_tokens=250,
         )
 
         answer = response.choices[0].message.content
