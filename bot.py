@@ -198,158 +198,158 @@ def chat(message):
         if chat_id in lead_state:
             step = lead_state[chat_id]
 
-            if step == "wait_niche":
-                lead_data[chat_id]["niche"] = message.text
-                lead_state[chat_id] = "wait_pain"
+    #         if step == "wait_niche":
+    #             lead_data[chat_id]["niche"] = message.text
+    #             lead_state[chat_id] = "wait_pain"
 
-                bot.reply_to(
-                    message,
-                    "Что сейчас больше всего мешает росту?\n\n"
-                    "Например:\n"
-                    "— мало заявок\n"
-                    "— дорогая реклама\n"
-                    "— слабые продажи"
-                )
-                return
+    #             bot.reply_to(
+    #                 message,
+    #                 "Что сейчас больше всего мешает росту?\n\n"
+    #                 "Например:\n"
+    #                 "— мало заявок\n"
+    #                 "— дорогая реклама\n"
+    #                 "— слабые продажи"
+    #             )
+    #             return
 
-            if step == "wait_pain":
-                lead_data[chat_id]["pain"] = message.text
-                lead_state[chat_id] = "wait_goal"
+    #         if step == "wait_pain":
+    #             lead_data[chat_id]["pain"] = message.text
+    #             lead_state[chat_id] = "wait_goal"
 
-                bot.reply_to(
-                    message,
-                    "Что хотите автоматизировать в первую очередь?"
-                )
-                return
+    #             bot.reply_to(
+    #                 message,
+    #                 "Что хотите автоматизировать в первую очередь?"
+    #             )
+    #             return
 
-            if step == "wait_goal":
-                lead_data[chat_id]["goal"] = message.text
-                segment, priority, offer_type = detect_segment(
-                    lead_data[chat_id]["niche"]
-                )
-                lead_data[chat_id]["segment"] = segment
-                lead_data[chat_id]["priority"] = priority
-                lead_data[chat_id]["offer_type"] = offer_type
-                lead_state[chat_id] = "wait_contact"
+    #         if step == "wait_goal":
+    #             lead_data[chat_id]["goal"] = message.text
+    #             segment, priority, offer_type = detect_segment(
+    #                 lead_data[chat_id]["niche"]
+    #             )
+    #             lead_data[chat_id]["segment"] = segment
+    #             lead_data[chat_id]["priority"] = priority
+    #             lead_data[chat_id]["offer_type"] = offer_type
+    #             lead_state[chat_id] = "wait_contact"
 
-                pain = lead_data[chat_id]["pain"].lower()
-                goal = lead_data[chat_id]["goal"].lower()
+    #             pain = lead_data[chat_id]["pain"].lower()
+    #             goal = lead_data[chat_id]["goal"].lower()
 
-                score = 50
+    #             score = 50
 
-                if any(word in pain for word in [
-                    "нет заявок",
-                    "мало клиентов",
-                    "дорого",
-                    "ручной",
-                    "долго",
-                    "теряем",
-                ]):
-                    score += 20
+    #             if any(word in pain for word in [
+    #                 "нет заявок",
+    #                 "мало клиентов",
+    #                 "дорого",
+    #                 "ручной",
+    #                 "долго",
+    #                 "теряем",
+    #             ]):
+    #                 score += 20
 
-                if any(word in goal for word in [
-                    "рост",
-                    "заявки",
-                    "автоматизация",
-                    "масштаб",
-                    "продажи",
-                ]):
-                    score += 30
+    #             if any(word in goal for word in [
+    #                 "рост",
+    #                 "заявки",
+    #                 "автоматизация",
+    #                 "масштаб",
+    #                 "продажи",
+    #             ]):
+    #                 score += 30
 
-                lead_data[chat_id]["score"] = score
-                save_followup(chat_id, message, "wait_contact")
+    #             lead_data[chat_id]["score"] = score
+    #             save_followup(chat_id, message, "wait_contact")
 
-                offer = make_offer(segment)
+    #             offer = make_offer(segment)
 
-                bot.reply_to(
-                    message,
-                    offer
+    #             bot.reply_to(
+    #                 message,
+    #                 offer
                     
-                )
-                return
+    #             )
+    #             return
 
-            if step == "wait_contact":
-                if (
-                    re.search(phone_pattern, message.text)
-                    or re.search(email_pattern, message.text)
-                    or "@" in message.text
-                ):
+    #         if step == "wait_contact":
+    #             if (
+    #                 re.search(phone_pattern, message.text)
+    #                 or re.search(email_pattern, message.text)
+    #                 or "@" in message.text
+    #             ):
                     
             
         
-                    supabase.table("leads").update({
-                        "name": message.from_user.first_name or "Без имени",
-                        "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
-                        "phone": message.text,
-                        "chat_id": str(chat_id),
-                        "niche": lead_data[chat_id].get("niche", ""),
-                        "pain": lead_data[chat_id].get("pain", ""),
-                        "goal": lead_data[chat_id].get("goal", ""),
-                        "score": lead_data[chat_id].get("score", 0),
-                        "status": "new",
-                        "segment": lead_data[chat_id].get("segment", "other"),
-                        "priority": lead_data[chat_id].get("priority", "Normal"),
-                        "offer_type": lead_data[chat_id].get("offer_type", "standard"),
-                    }).eq("chat_id", str(chat_id)).execute()
+    #                 supabase.table("leads").update({
+    #                     "name": message.from_user.first_name or "Без имени",
+    #                     "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
+    #                     "phone": message.text,
+    #                     "chat_id": str(chat_id),
+    #                     "niche": lead_data[chat_id].get("niche", ""),
+    #                     "pain": lead_data[chat_id].get("pain", ""),
+    #                     "goal": lead_data[chat_id].get("goal", ""),
+    #                     "score": lead_data[chat_id].get("score", 0),
+    #                     "status": "new",
+    #                     "segment": lead_data[chat_id].get("segment", "other"),
+    #                     "priority": lead_data[chat_id].get("priority", "Normal"),
+    #                     "offer_type": lead_data[chat_id].get("offer_type", "standard"),
+    #                 }).eq("chat_id", str(chat_id)).execute()
 
-                    bot.send_message(
-                        1908342578,
-                      f"🔥 Новый лид\n\n"
-                      f"Приоритет: {lead_data[chat_id]['priority']}\n"
-                      f"Сегмент: {lead_data[chat_id]['offer_type']}\n"
-                      f"Score: {lead_data[chat_id]['score']}\n\n"
-                      f"Имя: {message.from_user.first_name}\n"
-                      f"Username: @{message.from_user.username}\n"
-                      f"Ниша: {lead_data[chat_id]['niche']}\n"
-                      f"Боль: {lead_data[chat_id]['pain']}\n"
-                      f"Цель: {lead_data[chat_id]['goal']}\n"
-                      f"Контакт: {message.text}"  
-                    )
+    #                 bot.send_message(
+    #                     1908342578,
+    #                   f"🔥 Новый лид\n\n"
+    #                   f"Приоритет: {lead_data[chat_id]['priority']}\n"
+    #                   f"Сегмент: {lead_data[chat_id]['offer_type']}\n"
+    #                   f"Score: {lead_data[chat_id]['score']}\n\n"
+    #                   f"Имя: {message.from_user.first_name}\n"
+    #                   f"Username: @{message.from_user.username}\n"
+    #                   f"Ниша: {lead_data[chat_id]['niche']}\n"
+    #                   f"Боль: {lead_data[chat_id]['pain']}\n"
+    #                   f"Цель: {lead_data[chat_id]['goal']}\n"
+    #                   f"Контакт: {message.text}"  
+    #                 )
 
-                    # del lead_state[chat_id]
-                    # del lead_data[chat_id]
+    #                 # del lead_state[chat_id]
+    #                 # del lead_data[chat_id]
                     
 
-                    bot.reply_to(
-                        message,
-                        "Принял 👌\n\n"
-                        "Подготовлю конкретное предложение и свяжусь с вами 🚀"
-                    )
-                    return
+    #                 bot.reply_to(
+    #                     message,
+    #                     "Принял 👌\n\n"
+    #                     "Подготовлю конкретное предложение и свяжусь с вами 🚀"
+    #                 )
+    #                 return
     
-            else:
-                if chat_id not in user_memory:
-                    user_memory[chat_id] = [
-                        {"role": "system", "content": SYSTEM_PROMPT}
-                    ]
+    #         else:
+    #             if chat_id not in user_memory:
+    #                 user_memory[chat_id] = [
+    #                     {"role": "system", "content": SYSTEM_PROMPT}
+    #                 ]
 
-                user_memory[chat_id].append({
-                    "role": "user",
-                    "content": message.text
-                })
+    #             user_memory[chat_id].append({
+    #                 "role": "user",
+    #                 "content": message.text
+    #             })
 
-                if len(user_memory[chat_id]) > 12:
-                    user_memory[chat_id] = (
-                        [user_memory[chat_id][0]]
-                        + user_memory[chat_id][-11:]
-    )
+    #             if len(user_memory[chat_id]) > 12:
+    #                 user_memory[chat_id] = (
+    #                     [user_memory[chat_id][0]]
+    #                     + user_memory[chat_id][-11:]
+    # )
 
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=user_memory[chat_id],
-                    temperature=0.7,
-                    max_tokens=500,
-                )
+    #             response = client.chat.completions.create(
+    #                 model="gpt-4o-mini",
+    #                 messages=user_memory[chat_id],
+    #                 temperature=0.7,
+    #                 max_tokens=500,
+    #             )
 
-                answer = response.choices[0].message.content
+    #             answer = response.choices[0].message.content
 
-                user_memory[chat_id].append({
-                    "role": "assistant",
-                    "content": answer
-                })
+    #             user_memory[chat_id].append({
+    #                 "role": "assistant",
+    #                 "content": answer
+    #             })
 
-                bot.reply_to(message, answer)
-                return
+    #             bot.reply_to(message, answer)
+    #             return
         
                
 
