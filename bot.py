@@ -408,7 +408,7 @@ def chat(message):
     #                 )
     #                 return
     
-            else:
+            # else:
                 if chat_id not in user_memory:
                     user_memory[chat_id] = [
                         {"role": "system", "content": SYSTEM_PROMPT}
