@@ -288,6 +288,9 @@ def chat(message):
                     or re.search(email_pattern, message.text)
                     or "@" in message.text
                 ):
+                    
+            
+        
                     supabase.table("leads").update({
                         "name": message.from_user.first_name or "Без имени",
                         "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
@@ -327,12 +330,36 @@ def chat(message):
                         "Подготовлю конкретное предложение и свяжусь с вами 🚀"
                     )
                     return
+    
+            else:
+                if chat_id not in user_memory:
+                    user_memory[chat_id] = [
+                        {"role": "system", "content": SYSTEM_PROMPT}
+                    ]
 
-                bot.reply_to(
-                    message,
-                    "Нужен контакт для связи:\nтелефон / email / @username 👌"
+                user_memory[chat_id].append({
+                    "role": "user",
+                    "content": message.text
+                })
+
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=user_memory[chat_id],
+                    temperature=0.7,
+                    max_tokens=500,
                 )
+
+                answer = response.choices[0].message.content
+
+                user_memory[chat_id].append({
+                    "role": "assistant",
+                    "content": answer
+                })
+
+                bot.reply_to(message, answer)
                 return
+        
+               
 
         # запуск воронки
         if text == "да" and chat_id not in lead_state:
