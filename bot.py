@@ -521,6 +521,7 @@ Summary:
     #                 return
     
             # else:
+            
             if chat_id not in user_memory:
                 user_memory[chat_id] = [
                     {
