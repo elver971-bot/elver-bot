@@ -641,7 +641,11 @@ Summary:
                
 
         # запуск воронки
-        if text == "да" and chat_id not in lead_state:
+        if (
+            text == "да"
+            and chat_id not in lead_state
+            and chat_id not in user_memory
+        ):
             lead_state[chat_id] = "wait_niche"
             lead_data[chat_id] = {}
 
