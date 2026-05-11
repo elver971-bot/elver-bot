@@ -375,9 +375,9 @@ def chat(message):
         text = message.text.lower()
 
     lead = supabase.table("leads") \
-    .select("*") \
-    .eq("chat_id", str(chat_id)) \
-    .execute()
+        .select("*") \
+        .eq("chat_id", str(chat_id)) \
+        .execute()
 
     lead_info = ""
 
