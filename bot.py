@@ -495,10 +495,7 @@ def chat(message):
     
             # else:
             if chat_id not in user_memory:
-                user_memory[chat_id] = [
-                    "role": "system",
-                    "content": SYSTEM_PROMPT + "\n\n" + lead_info
-                ]
+                user_memory[chat_id] = ["role": "system", "content": SYSTEM_PROMPT + "\n\n" + lead_info]
 
             user_memory[chat_id].append({
                 "role": "user",
