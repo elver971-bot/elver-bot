@@ -374,25 +374,25 @@ def chat(message):
         chat_id = message.chat.id
         text = message.text.lower()
 
-    lead = supabase.table("leads") \
-        .select("*") \
-        .eq("chat_id", str(chat_id)) \
-        .execute()
+        lead = supabase.table("leads") \
+            .select("*") \
+            .eq("chat_id", str(chat_id)) \
+            .execute()
 
-    lead_info = ""
+        lead_info = ""
 
-    if lead.data:
-        db_lead = lead.data[0]
+        if lead.data:
+            db_lead = lead.data[0]
 
-        lead_info = f"""
-    Ниша: {db_lead.get('niche', '')}
-    Боль: {db_lead.get('pain', '')}
-    Цель: {db_lead.get('goal', '')}
-    Этап: {db_lead.get('stage', '')}
+            lead_info = f"""
+        Ниша: {db_lead.get('niche', '')}
+        Боль: {db_lead.get('pain', '')}
+        Цель: {db_lead.get('goal', '')}
+        Этап: {db_lead.get('stage', '')}
 
-    Summary:
-    {db_lead.get('summary', '')}
-    """
+        Summary:
+        {db_lead.get('summary', '')}
+        """
        
         phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
