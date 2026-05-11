@@ -315,6 +315,28 @@ SYSTEM_PROMPT = """
 def start(message):
     chat_id = message.chat.id
 
+    lead = supabase.table("leads") \
+        .select("*") \
+        .eq("chat_id", str(chat_id)) \
+        .execute()
+
+    lead_info = ""
+
+    if lead.data:
+        db_lead = lead.data[0]
+
+        lead_info = f"""
+    Клиент уже общался ранее.
+
+    Ниша: {db_lead.get('niche', '')}
+    Боль: {db_lead.get('pain', '')}
+    Цель: {db_lead.get('goal', '')}
+    Этап: {db_lead.get('stage', '')}
+
+    Краткое summary:
+    {db_lead.get('summary', '')}
+    """
+
     # полная очистка прошлого диалога
     if chat_id in user_memory:
         del user_memory[chat_id]
@@ -474,7 +496,8 @@ def chat(message):
             # else:
             if chat_id not in user_memory:
                 user_memory[chat_id] = [
-                    {"role": "system", "content": SYSTEM_PROMPT}
+                    "role": "system",
+                    "content": SYSTEM_PROMPT + "\n\n" + lead_info
                 ]
 
             user_memory[chat_id].append({
@@ -575,6 +598,19 @@ def chat(message):
         )
 
         answer = response.choices[0].message.content
+        summary = f"""
+        Ниша: {lead_data.get(chat_id, {}).get("niche", "")}
+        Боль: {lead_data.get(chat_id, {}).get("pain", "")}
+        Цель: {lead_data.get(chat_id, {}).get("goal", "")}
+
+        Последний запрос клиента:
+        {message.text}
+        """
+
+        supabase.table("leads").update({
+            "summary": summary,
+            "stage": "dialog"
+        }).eq("chat_id", str(chat_id)).execute()
 
         user_memory[chat_id].append({
             "role": "assistant",
