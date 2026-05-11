@@ -174,6 +174,31 @@ SYSTEM_PROMPT = """
 "Я занимаюсь AI-автоматизацией и внедрением AI-ассистентов 😊
 Если вопрос связан с бизнесом, продажами или автоматизацией — помогу разобраться."
 
+Если клиент уже ответил на вопрос — не спрашивай это снова.
+
+Помни предыдущие сообщения клиента и используй их в разговоре.
+
+Если клиент заинтересован:
+— веди разговор к внедрению
+— консультации
+— расчету
+— созвону
+
+Не превращайся в обычный ChatGPT.
+Ты консультант по автоматизации бизнеса.
+
+Не уходи в длинные теоретические объяснения.
+Отвечай практично и по делу.
+
+Если клиент спрашивает:
+— стоимость
+— сроки
+— CRM
+— AI-ассистента
+— интеграции
+— воронки
+
+то отвечай конкретно и профессионально.
 Не повторяй одинаковые фразы.
 Не используй слишком длинные ответы.
 Не веди себя как скриптовый бот.
@@ -383,39 +408,39 @@ def chat(message):
     #                 )
     #                 return
     
-    #         else:
-    #             if chat_id not in user_memory:
-    #                 user_memory[chat_id] = [
-    #                     {"role": "system", "content": SYSTEM_PROMPT}
-    #                 ]
+            else:
+                if chat_id not in user_memory:
+                    user_memory[chat_id] = [
+                        {"role": "system", "content": SYSTEM_PROMPT}
+                    ]
 
-    #             user_memory[chat_id].append({
-    #                 "role": "user",
-    #                 "content": message.text
-    #             })
+                user_memory[chat_id].append({
+                    "role": "user",
+                    "content": message.text
+                })
 
-    #             if len(user_memory[chat_id]) > 30:
-    #                 user_memory[chat_id] = (
-    #                     [user_memory[chat_id][0]]
-    #                     + user_memory[chat_id][-11:]
-    # )
+                if len(user_memory[chat_id]) > 30:
+                    user_memory[chat_id] = (
+                        [user_memory[chat_id][0]]
+                        + user_memory[chat_id][-11:]
+    )
 
-    #             response = client.chat.completions.create(
-    #                 model="gpt-4o-mini",
-    #                 messages=user_memory[chat_id],
-    #                 temperature=0.7,
-    #                 max_tokens=500,
-    #             )
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=user_memory[chat_id],
+                    temperature=0.5,
+                    max_tokens=500,
+                )
 
-    #             answer = response.choices[0].message.content
+                answer = response.choices[0].message.content
 
-    #             user_memory[chat_id].append({
-    #                 "role": "assistant",
-    #                 "content": answer
-    #             })
+                user_memory[chat_id].append({
+                    "role": "assistant",
+                    "content": answer
+                })
 
-    #             bot.reply_to(message, answer)
-    #             return
+                bot.reply_to(message, answer)
+                return
         
                
 
@@ -433,13 +458,13 @@ def chat(message):
             return
         
 
-        # если проявил интерес
-        if (any(word in text for word in lead_words)):
-            bot.reply_to(
-                message,
-                "Готовы начать диагностику?\n\nНапишите: да"
-            )
-            return
+        # # если проявил интерес
+        # if (any(word in text for word in lead_words)):
+        #     bot.reply_to(
+        #         message,
+        #         "Готовы начать диагностику?\n\nНапишите: да"
+        #     )
+        #     return
         
         business_words = [
             "как",
