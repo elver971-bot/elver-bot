@@ -315,18 +315,17 @@ SYSTEM_PROMPT = """
 def start(message):
     chat_id = message.chat.id
 
-    
-lead = supabase.table("leads") \
-    .select("*") \
-    .eq("chat_id", str(chat_id)) \
-    .execute()
+    lead = supabase.table("leads") \
+        .select("*") \
+        .eq("chat_id", str(chat_id)) \
+        .execute()
 
-lead_info = ""
+    lead_info = ""
 
-if lead.data:
-    db_lead = lead.data[0]
+    if lead.data:
+        db_lead = lead.data[0]
 
-    lead_info = f"""
+        lead_info = f"""
 Клиент уже общался ранее.
 
 Ниша: {db_lead.get('niche', '')}
@@ -348,12 +347,12 @@ if lead.data:
     if chat_id in lead_data:
         del lead_data[chat_id]
 
-        user_memory[chat_id] = [
+    user_memory[chat_id] = [
         {
             "role": "system",
             "content": SYSTEM_PROMPT + "\n\n" + lead_info
         }
-    ]    
+    ]
 
     lead_state[chat_id] = "wait_niche"
     lead_data[chat_id] = {}
