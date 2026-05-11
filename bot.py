@@ -840,7 +840,7 @@ def send_followups():
 
             except:
                 pass
-send_followups()           
+# send_followups()           
 print("Webhook started")
 
 if __name__ == "__main__":
