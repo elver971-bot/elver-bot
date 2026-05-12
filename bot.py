@@ -975,6 +975,36 @@ Summary:
         
         pipeline_stage = "new"
 
+        budget_level = "unknown"
+
+        if any(word in text_all for word in [
+            "500000",
+            "миллион",
+            "1 млн",
+            "2 млн",
+            "сеть",
+            "филиалы",
+            "отдел продаж"
+        ]):
+            budget_level = "high"
+
+        elif any(word in text_all for word in [
+            "100000",
+            "200000",
+            "50 сотрудников",
+            "crm",
+            "автоматизация"
+        ]):
+            budget_level = "medium"
+
+        elif any(word in text_all for word in [
+            "недорого",
+            "дешево",
+            "без бюджета",
+            "нет денег"
+        ]):
+            budget_level = "low"
+
         text_all = (
             message.text.lower()
             + " "
@@ -1067,6 +1097,7 @@ Summary:
                 "stage": "dialog",
                 "lead_temp": ai_temp,
                 "pipeline_stage": pipeline_stage,
+                "budget_level": budget_level,
                 "last_message_at": datetime.utcnow().isoformat()
             }).eq("chat_id", str(chat_id)).execute()
         
