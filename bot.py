@@ -803,6 +803,29 @@ Summary:
             return
 
         # обычный AI чат
+
+        lead_exists = (
+            supabase.table("leads")
+            .select("id")
+            .eq("chat_id", str(chat_id))
+            .execute()
+        )
+
+        if not lead_exists.data:
+            supabase.table("leads").insert({
+                "chat_id": str(chat_id),
+                "name": message.from_user.first_name or "Без имени",
+                "username": (
+                    f"@{message.from_user.username}"
+                    if message.from_user.username
+                    else "нет"
+                ),
+                "stage": "dialog",
+                "lead_temp": "cold",
+                "lead_score": 0,
+                "last_message_at": datetime.utcnow().isoformat()
+            }).execute()
+
         if chat_id not in user_memory:
             user_memory[chat_id] = [
                 {
