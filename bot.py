@@ -806,6 +806,7 @@ Summary:
                 "бюджет"
             ]):
                 pipeline_stage = "pricing"
+                lead_score += 20
 
             elif any(word in text_all for word in [
                 "созвон",
@@ -860,12 +861,15 @@ Summary:
             # =========================================
 
             close_probability = 10
+            lead_score = 0
 
             if ai_temp == "hot":
                 close_probability += 40
+                lead_score += 40
 
             elif ai_temp == "warm":
                 close_probability += 20
+                lead_score += 20
 
             if pipeline_stage == "pricing":
                 close_probability += 20
@@ -890,6 +894,8 @@ Summary:
 
             if close_probability > 100:
                 close_probability = 100
+            if lead_score > 100:
+                lead_score = 100
 
             try:
                 supabase.table("leads").update({
@@ -1319,6 +1325,7 @@ Summary:
             "отдел продаж"
         ]):
             budget_level = "high"
+            lead_score += 25
 
         elif any(word in text_all for word in [
             "100000",
@@ -1328,6 +1335,7 @@ Summary:
             "автоматизация"
         ]):
             budget_level = "medium"
+            lead_score += 15
 
         elif any(word in text_all for word in [
             "недорого",
@@ -1366,6 +1374,7 @@ Summary:
 
         elif pipeline_stage == "consultation":
             close_probability += 25
+            lead_score += 25
 
         elif pipeline_stage == "hot":
             close_probability += 35
@@ -1396,6 +1405,7 @@ Summary:
             "budget_level": budget_level,
             "priority_level": priority_level,
             "close_probability": close_probability,
+            "lead_score": lead_score,
             "pain_level": pain_level,
             "client_type": client_type,
             "ai_notes": ai_notes_text,
