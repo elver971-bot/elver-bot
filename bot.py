@@ -1050,21 +1050,7 @@ def chat(message):
 
         manager_action = "send_examples"
 
-        if ai_temp == "hot":
-            manager_action = "call_now"
         
-        elif pipeline_stage == "pricing":
-            manager_action = "send_offer"
-
-        elif pipeline_stage == "consultation":
-            manager_action = "schedule_meeting"
-
-        elif pain_level == "high":
-            manager_action = "focus_pain"
-
-        elif client_type == "cold":
-            manager_action = "nurture"
-
         if client_type == "hot":
             ai_stage = "closing"
             ai_next_step = "request_contact"
