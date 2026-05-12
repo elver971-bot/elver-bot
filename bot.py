@@ -890,6 +890,7 @@ Summary:
 
         ai_notes:
         краткая заметка менеджеру
+        
         """
 
         ai_notes_response = client.chat.completions.create(
@@ -1419,6 +1420,7 @@ def send_followups():
 
                 supabase.table("leads").update({
                     "followup_step": next_step,
+                    "followup_sent": True if next_step >= 3 else False,
                     "reanimate_sent": True if diff >= timedelta(days=7) else reanimate_sent
                 }).eq("chat_id", lead["chat_id"]).execute()    
 
