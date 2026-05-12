@@ -706,6 +706,21 @@ Summary:
             elif score >= 40:
                 lead_temp = "warm"
 
+                contact_request = ""
+
+            if (
+                score >= 70
+                and not re.search(phone_pattern, message.text)
+                and "@" not in message.text
+            ):
+
+                contact_request = (
+                    "\n\n"
+                    "Если хотите — могу подготовить "
+                    "конкретный план внедрения под ваш бизнес 👌\n\n"
+                    "Оставьте телефон, Telegram или email для связи."
+                )    
+
 
             supabase.table("leads").update({
                 "lead_score": score,
@@ -732,7 +747,7 @@ Summary:
             except Exception as save_error:
                 print("History save error:", save_error)
            
-            bot.reply_to(message, answer)
+            bot.reply_to(message, answer + contact_request)
             return
         
                
