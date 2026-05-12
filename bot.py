@@ -895,10 +895,71 @@ Summary:
 
         summary = summary_response.choices[0].message.content
 
+        ai_temp_prompt = f"""
+            Определи температуру лида.
+
+            Варианты:
+            - hot
+            - warm
+            - cold
+
+            HOT:
+            - хочет внедрение
+            - просит цену
+            - просит сроки
+            - готов обсуждать
+            - оставил контакт
+
+            WARM:
+            - есть интерес
+            - задает вопросы
+            - изучает
+
+            COLD:
+            - слабый интерес
+            - просто общается
+
+            Диалог:
+            Клиент: {message.text}
+
+            AI:
+            {answer}
+
+            Ответь только одним словом:
+            hot / warm / cold
+            """
+
+        ai_temp_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": ai_temp_prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=5,
+            )
+
+        ai_temp = (
+                ai_temp_response
+                .choices[0]
+                .message
+                .content
+                .strip()
+                .lower()
+            )
+
         supabase.table("leads").update({
-            "summary": summary,
-            "stage": "dialog"
-        }).eq("chat_id", str(chat_id)).execute()
+                "summary": summary,
+                "stage": "dialog",
+                "lead_temp": ai_temp,
+                "last_message_at": datetime.utcnow().isoformat()
+            }).eq("chat_id", str(chat_id)).execute() 
 
         user_memory[chat_id].append({
             "role": "assistant",
