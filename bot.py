@@ -837,14 +837,7 @@ def chat(message):
             
             score = 0
 
-            text_all = (
-                lead_info.lower()
-                + " "
-                + message.text.lower()
-                + " "
-                + answer.lower()
-            )
-
+                          
             # бюджет
             if any(word in text_all for word in [
                 "бюджет",
@@ -1277,6 +1270,12 @@ def chat(message):
         elif ai_temp == "warm":
             close_probability += 20
             lead_score += 20
+
+        text_all = (
+            message.text.lower()
+            + " "
+            + answer.lower()
+        )
 
         pipeline_stage = "new"
 
