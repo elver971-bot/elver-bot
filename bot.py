@@ -582,65 +582,309 @@ Summary:
             )
 
             answer = response.choices[0].message.content
-            
-            brief_prompt = f"""
-            Сделай краткую CRM-сводку клиента.
 
-            Сообщения:
+            text_all = (
+                message.text.lower()
+                + " "
+                + answer.lower()
+            )
+
+            # =========================================
+            # SUMMARY
+            # =========================================
+
+            summary_prompt = f"""
+            Суммаризируй клиента для CRM.
+
+            Кратко укажи:
+            - чем занимается
+            - боли
+            - цели
+            - интерес
+            - что обсуждали
+            - стадия готовности
+            - есть ли контакт
+
+            CRM данные:
+
+            Ниша:
+            {lead_data.get(chat_id, {}).get("niche", "")}
+
+            Боль:
+            {lead_data.get(chat_id, {}).get("pain", "")}
+
+            Цель:
+            {lead_data.get(chat_id, {}).get("goal", "")}
+
+            Диалог:
+
+            Клиент:
             {message.text}
 
-            Ответ AI:
+            AI:
             {answer}
-
-            Нужен ответ строго в формате:
-
-            STAGE:
-            BRIEF:
-            NEXT:
-
-            Где:
-
-            STAGE = cold / warm / hot
-
-            BRIEF = кратко о клиенте
-
-            NEXT = следующий шаг продажи
             """
 
-            try:
-                brief_response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "Ты CRM AI аналитик."
-                        },
-                        {
-                            "role": "user",
-                            "content": brief_prompt
-                        }
-                    ],
-                    temperature=0.2,
-                    max_tokens=150
-                )
+            summary_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": summary_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=200,
+            )
 
-                brief_text = brief_response.choices[0].message.content
+            summary = summary_response.choices[0].message.content
 
-                ai_stage = "cold"
-                ai_brief = ""
-                ai_next_step = ""
+            # =========================================
+            # AI NOTES
+            # =========================================
 
-                for line in brief_text.split("\n"):
+            ai_notes_prompt = f"""
+            Ты AI CRM аналитик.
 
-                    if line.startswith("STAGE:"):
-                        ai_stage = line.replace("STAGE:", "").strip()
+            Проанализируй клиента.
 
-                    elif line.startswith("BRIEF:"):
-                        ai_brief = line.replace("BRIEF:", "").strip()
+            Диалог:
+            {summary}
 
-                    elif line.startswith("NEXT:"):
-                        ai_next_step = line.replace("NEXT:", "").strip()
+            Ответь JSON форматом:
 
+            {{
+                "pain_level": "...",
+                "client_type": "...",
+                "ai_notes": "..."
+            }}
+
+            pain_level:
+            low / medium / high
+
+            client_type:
+            cold / warm / hot
+
+            ai_notes:
+            краткая заметка менеджеру
+            """
+
+            ai_notes_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": ai_notes_prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=120,
+            )
+
+            ai_notes_text = (
+                ai_notes_response
+                .choices[0]
+                .message
+                .content
+            )
+
+            pain_level = "low"
+            client_type = "cold"
+
+            if "high" in ai_notes_text:
+                pain_level = "high"
+
+            elif "medium" in ai_notes_text:
+                pain_level = "medium"
+
+            if '"client_type": "hot"' in ai_notes_text:
+                client_type = "hot"
+
+            elif '"client_type": "warm"' in ai_notes_text:
+                client_type = "warm"
+
+            # =========================================
+            # LEAD TEMPERATURE
+            # =========================================
+
+            ai_temp_prompt = f"""
+            Определи температуру лида.
+
+            Варианты:
+            - hot
+            - warm
+            - cold
+
+            HOT:
+            - хочет внедрение
+            - просит цену
+            - просит сроки
+            - готов обсуждать
+            - оставил контакт
+
+            WARM:
+            - есть интерес
+            - задает вопросы
+            - изучает
+
+            COLD:
+            - слабый интерес
+            - просто общается
+
+            Диалог:
+
+            Клиент:
+            {message.text}
+
+            AI:
+            {answer}
+
+            Ответь только одним словом:
+            hot / warm / cold
+            """
+
+            ai_temp_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": ai_temp_prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=5,
+            )
+
+            ai_temp = (
+                ai_temp_response
+                .choices[0]
+                .message
+                .content
+                .strip()
+                .lower()
+            )
+
+            # =========================================
+            # PRIORITY
+            # =========================================
+
+            priority_level = "low"
+
+            if ai_temp == "hot":
+                priority_level = "high"
+
+            elif ai_temp == "warm":
+                priority_level = "medium"
+
+            # =========================================
+            # PIPELINE
+            # =========================================
+
+            pipeline_stage = "new"
+
+            if any(word in text_all for word in [
+                "стоимость",
+                "цена",
+                "сколько",
+                "бюджет"
+            ]):
+                pipeline_stage = "pricing"
+
+            elif any(word in text_all for word in [
+                "созвон",
+                "консультация",
+                "обсудить",
+                "связаться"
+            ]):
+                pipeline_stage = "consultation"
+
+            elif ai_temp == "hot":
+                pipeline_stage = "hot"
+
+            elif ai_temp == "warm":
+                pipeline_stage = "interested"
+
+            # =========================================
+            # BUDGET
+            # =========================================
+
+            budget_level = "unknown"
+
+            if any(word in text_all for word in [
+                "500000",
+                "миллион",
+                "1 млн",
+                "2 млн",
+                "сеть",
+                "филиалы",
+                "отдел продаж"
+            ]):
+                budget_level = "high"
+
+            elif any(word in text_all for word in [
+                "100000",
+                "200000",
+                "50 сотрудников",
+                "crm",
+                "автоматизация"
+            ]):
+                budget_level = "medium"
+
+            elif any(word in text_all for word in [
+                "недорого",
+                "дешево",
+                "без бюджета",
+                "нет денег"
+            ]):
+                budget_level = "low"
+
+            # =========================================
+            # CLOSE PROBABILITY
+            # =========================================
+
+            close_probability = 10
+
+            if ai_temp == "hot":
+                close_probability += 40
+
+            elif ai_temp == "warm":
+                close_probability += 20
+
+            if pipeline_stage == "pricing":
+                close_probability += 20
+
+            elif pipeline_stage == "consultation":
+                close_probability += 25
+
+            elif pipeline_stage == "hot":
+                close_probability += 35
+
+            if budget_level == "high":
+                close_probability += 20
+
+            elif budget_level == "medium":
+                close_probability += 10
+
+            if (
+                re.search(phone_pattern, message.text)
+                or "@" in message.text
+            ):
+                close_probability += 25
+
+            if close_probability > 100:
+                close_probability = 100
                 supabase.table("leads").update({
                     "ai_stage": ai_stage,
                     "ai_brief": ai_brief,
@@ -865,7 +1109,7 @@ Summary:
         )
 
         answer = response.choices[0].message.content
-        summary_prompt = f"""
+        
         ai_notes_prompt = f"""
         Ты AI CRM аналитик.
 
@@ -908,7 +1152,7 @@ Summary:
             temperature=0.1,
             max_tokens=120,
         )
-                    ai_notes_text = (
+                ai_notes_text = (
                 ai_notes_response
                 .choices[0]
                 .message
@@ -979,38 +1223,39 @@ Summary:
         summary = summary_response.choices[0].message.content
 
         ai_temp_prompt = f"""
-            Определи температуру лида.
+        Определи температуру лида.
 
-            Варианты:
-            - hot
-            - warm
-            - cold
+        Варианты:
+        - hot
+        - warm
+        - cold
 
-            HOT:
-            - хочет внедрение
-            - просит цену
-            - просит сроки
-            - готов обсуждать
-            - оставил контакт
+        HOT:
+        - хочет внедрение
+        - просит цену
+        - просит сроки
+        - готов обсуждать
+        - оставил контакт
 
-            WARM:
-            - есть интерес
-            - задает вопросы
-            - изучает
+        WARM:
+        - есть интерес
+        - задает вопросы
+        - изучает
 
-            COLD:
-            - слабый интерес
-            - просто общается
+        COLD:
+        - слабый интерес
+        - просто общается
 
-            Диалог:
-            Клиент: {message.text}
+        Диалог:
+        Клиент: {message.text}
 
-            AI:
-            {answer}
+        AI:
+        {answer}
 
-            Ответь только одним словом:
-            hot / warm / cold
-            """
+        Ответь только одним словом:
+        hot / warm / cold
+    
+        """
 
         ai_temp_response = client.chat.completions.create(
                 model="gpt-4.1-mini",
@@ -1175,6 +1420,7 @@ Summary:
 
             Ответь только одним словом:
             hot / warm / cold
+        
             """             
 
         ai_temp_response = client.chat.completions.create(
