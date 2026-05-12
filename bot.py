@@ -1049,6 +1049,9 @@ def chat(message):
         ai_next_step = "send_case"
 
         manager_action = "send_examples"
+
+        if ai_temp == "hot":
+             manager_action = "call_now"
         
         elif pipeline_stage == "pricing":
             manager_action = "send_offer"
