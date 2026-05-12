@@ -1051,7 +1051,7 @@ def chat(message):
         manager_action = "send_examples"
 
         if ai_temp == "hot":
-             manager_action = "call_now"
+            manager_action = "call_now"
         
         elif pipeline_stage == "pricing":
             manager_action = "send_offer"
