@@ -642,6 +642,11 @@ Summary:
             )
 
             summary = summary_response.choices[0].message.content
+            text_all = (
+            message.text.lower()
+            + " "
+            + answer.lower()
+            )
 
             # =========================================
             # AI NOTES
@@ -1224,40 +1229,7 @@ Summary:
 
         summary = summary_response.choices[0].message.content
 
-        ai_temp_prompt = f"""
-        Определи температуру лида.
-
-        Варианты:
-        - hot
-        - warm
-        - cold
-
-        HOT:
-        - хочет внедрение
-        - просит цену
-        - просит сроки
-        - готов обсуждать
-        - оставил контакт
-
-        WARM:
-        - есть интерес
-        - задает вопросы
-        - изучает
-
-        COLD:
-        - слабый интерес
-        - просто общается
-
-        Диалог:
-        Клиент: {message.text}
-
-        AI:
-        {answer}
-
-        Ответь только одним словом:
-        hot / warm / cold
-        """
-
+        
         ai_temp_response = client.chat.completions.create(
             model="gpt-4.1-mini",
             messages=[
@@ -1303,12 +1275,7 @@ Summary:
 
         pipeline_stage = "new"
 
-        text_all = (
-            message.text.lower()
-            + " "
-            + answer.lower()
-        )
-
+       
         budget_level = "unknown"
 
         if any(word in text_all for word in [
