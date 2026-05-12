@@ -953,6 +953,36 @@ Summary:
                 .strip()
                 .lower()
             )
+        
+        pipeline_stage = "new"
+
+        text_all = (
+            message.text.lower()
+            + " "
+            + answer.lower()
+        )
+
+        if any(word in text_all for word in [
+            "стоимость",
+            "цена",
+            "сколько",
+            "бюджет"
+        ]):
+            pipeline_stage = "pricing"
+
+        elif any(word in text_all for word in [
+            "созвон",
+            "консультация",
+            "обсудить",
+            "связаться"
+        ]):
+            pipeline_stage = "consultation"
+
+        elif ai_temp == "hot":
+            pipeline_stage = "hot"
+
+        elif ai_temp == "warm":
+            pipeline_stage = "interested"
 
         ai_temp_prompt = f"""
             Определи температуру лида.
@@ -1017,8 +1047,9 @@ Summary:
                 "summary": summary,
                 "stage": "dialog",
                 "lead_temp": ai_temp,
+                "pipeline_stage": pipeline_stage,
                 "last_message_at": datetime.utcnow().isoformat()
-            }).eq("chat_id", str(chat_id)).execute() 
+            }).eq("chat_id", str(chat_id)).execute()
 
         user_memory[chat_id].append({
             "role": "assistant",
