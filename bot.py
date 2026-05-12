@@ -1178,8 +1178,7 @@ def chat(message):
             temperature=0.1,
             max_tokens=5,
         )
-        print("TEMP OK", ai_temp)
-
+        
         ai_temp = (
             ai_temp_response
             .choices[0]
@@ -1188,6 +1187,7 @@ def chat(message):
             .strip()
             .lower()
         )
+        print("TEMP OK", ai_temp)
 
         if ai_temp not in ["hot", "warm", "cold"]:
             ai_temp = "cold"
