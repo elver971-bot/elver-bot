@@ -396,7 +396,9 @@ def chat(message):
         return
     try:
         chat_id = message.chat.id
-        text = message.text.lower()
+
+        user_text = message.text.strip()
+        text = user_text.lower()
 
         lead = supabase.table("leads") \
             .select("*") \
@@ -406,17 +408,18 @@ def chat(message):
         lead_info = ""
 
         if lead.data:
+
             db_lead = lead.data[0]
 
             lead_info = f"""
-Ниша: {db_lead.get('niche', '')}
-Боль: {db_lead.get('pain', '')}
-Цель: {db_lead.get('goal', '')}
-Этап: {db_lead.get('stage', '')}
+        Ниша: {db_lead.get('niche', '')}
+        Боль: {db_lead.get('pain', '')}
+        Цель: {db_lead.get('goal', '')}
+        Этап: {db_lead.get('stage', '')}
 
-Summary:
-{db_lead.get('summary', '')}
-"""
+        Summary:
+        {db_lead.get('summary', '')}
+        """
        
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
      
