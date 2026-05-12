@@ -595,12 +595,7 @@ def chat(message):
 
             answer = response.choices[0].message.content
 
-            text_all = (
-                message.text.lower()
-                + " "
-                + answer.lower()
-            )
-
+            
             # =========================================
             # SUMMARY
             # =========================================
@@ -654,12 +649,7 @@ def chat(message):
             )
 
             summary = summary_response.choices[0].message.content
-            text_all = (
-            message.text.lower()
-            + " "
-            + answer.lower()
-            )
-
+            
             # =========================================
             # AI NOTES
             # =========================================
