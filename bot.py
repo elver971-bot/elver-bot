@@ -878,12 +878,13 @@ def chat(message):
                 history_text = str(user_memory[chat_id])
 
                 supabase.table("leads").update({
-                    "ai_history": history_text,
+                    #"ai_history": history_text,
                     "last_message_at": datetime.utcnow().isoformat()
                 }).eq("chat_id", str(chat_id)).execute()
 
             except Exception as save_error:
                 print("History save error:", save_error)
+                print("SAVE ERROR FULL:", save_error)
            
             bot.reply_to(message, answer + contact_request)
             return
@@ -981,12 +982,13 @@ def chat(message):
             history_text = str(user_memory[chat_id])
 
             supabase.table("leads").update({
-                "ai_history": history_text,
+                #"ai_history": history_text,
                 "last_message_at": datetime.utcnow().isoformat()
             }).eq("chat_id", str(chat_id)).execute()
 
         except Exception as save_error:
             print("History save error:", save_error)
+            print("SAVE ERROR FULL:", save_error)
 
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
