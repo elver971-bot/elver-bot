@@ -744,44 +744,7 @@ def chat(message):
             # =========================================
             # PRIORITY
             # =========================================
-
-            priority_level = "low"
-
-            if ai_temp == "hot":
-                priority_level = "high"
-
-            elif ai_temp == "warm":
-                priority_level = "medium"
-
-            # =========================================
-            # PIPELINE
-            # =========================================
-
-            pipeline_stage = "new"
-
-            if any(word in text_all for word in [
-                "стоимость",
-                "цена",
-                "сколько",
-                "бюджет"
-            ]):
-                pipeline_stage = "pricing"
-                lead_score += 20
-
-            elif any(word in text_all for word in [
-                "созвон",
-                "консультация",
-                "обсудить",
-                "связаться"
-            ]):
-                pipeline_stage = "consultation"
-
-            elif ai_temp == "hot":
-                pipeline_stage = "hot"
-
-            elif ai_temp == "warm":
-                pipeline_stage = "interested"
-
+            
             # =========================================
             # BUDGET
             # =========================================
