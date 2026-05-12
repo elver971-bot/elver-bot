@@ -892,7 +892,7 @@ Summary:
                 }).eq("chat_id", str(chat_id)).execute()
 
             except Exception as brief_error:
-                print("Brief error:", brief_error)
+            print("Brief error:", brief_error)
             
             score = 0
 
@@ -1152,28 +1152,29 @@ Summary:
             temperature=0.1,
             max_tokens=120,
         )
-                ai_notes_text = (
+        ai_notes_text = (
                 ai_notes_response
                 .choices[0]
                 .message
                 .content
             )
 
-            pain_level = "low"
-            client_type = "cold"
+                pain_level = "low"
+        client_type = "cold"
 
-            if "high" in ai_notes_text:
-                pain_level = "high"
+        if "high" in ai_notes_text:
+            pain_level = "high"
 
-            elif "medium" in ai_notes_text:
-                pain_level = "medium"
+        elif "medium" in ai_notes_text:
+            pain_level = "medium"
 
-            if '"client_type": "hot"' in ai_notes_text:
-                client_type = "hot"
+        if '"client_type": "hot"' in ai_notes_text:
+            client_type = "hot"
 
-            elif '"client_type": "warm"' in ai_notes_text:
-                client_type = "warm"
+        elif '"client_type": "warm"' in ai_notes_text:
+            client_type = "warm"
 
+        summary_prompt = f"""
         Суммаризируй клиента для CRM.
 
         Кратко укажи:
@@ -1185,8 +1186,6 @@ Summary:
         - стадия готовности
         - есть ли контакт
 
-        Диалог:
-
         CRM данные:
 
         Ниша:
@@ -1197,6 +1196,8 @@ Summary:
 
         Цель:
         {lead_data.get(chat_id, {}).get("goal", "")}
+
+        Диалог:
 
         Клиент: {message.text}
 
@@ -1218,7 +1219,7 @@ Summary:
             ],
             temperature=0.2,
             max_tokens=200,
-            )
+        )
 
         summary = summary_response.choices[0].message.content
 
@@ -1254,33 +1255,33 @@ Summary:
 
         Ответь только одним словом:
         hot / warm / cold
-    
         """
 
         ai_temp_response = client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Ты AI CRM аналитик."
-                    },
-                    {
-                        "role": "user",
-                        "content": ai_temp_prompt
-                    }
-                ],
-                temperature=0.1,
-                max_tokens=5,
-            )
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты AI CRM аналитик."
+                },
+                {
+                    "role": "user",
+                    "content": ai_temp_prompt
+                }
+            ],
+            temperature=0.1,
+            max_tokens=5,
+        )
 
         ai_temp = (
-                ai_temp_response
-                .choices[0]
-                .message
-                .content
-                .strip()
-                .lower()
-            )
+            ai_temp_response
+            .choices[0]
+            .message
+            .content
+            .strip()
+            .lower()
+        )
+
         # приоритет лида
         priority_level = "low"
 
@@ -1298,8 +1299,14 @@ Summary:
 
         elif ai_temp == "warm":
             close_probability += 20
-        
+
         pipeline_stage = "new"
+
+        text_all = (
+            message.text.lower()
+            + " "
+            + answer.lower()
+        )
 
         budget_level = "unknown"
 
@@ -1330,9 +1337,31 @@ Summary:
             "нет денег"
         ]):
             budget_level = "low"
-        # вероятность закрытия сделки
 
         # этап сделки
+        if any(word in text_all for word in [
+            "стоимость",
+            "цена",
+            "сколько",
+            "бюджет"
+        ]):
+            pipeline_stage = "pricing"
+
+        elif any(word in text_all for word in [
+            "созвон",
+            "консультация",
+            "обсудить",
+            "связаться"
+        ]):
+            pipeline_stage = "consultation"
+
+        elif ai_temp == "hot":
+            pipeline_stage = "hot"
+
+        elif ai_temp == "warm":
+            pipeline_stage = "interested"
+
+        # вероятность закрытия сделки
         if pipeline_stage == "pricing":
             close_probability += 20
 
@@ -1360,94 +1389,6 @@ Summary:
         if close_probability > 100:
             close_probability = 100
 
-        text_all = (
-            message.text.lower()
-            + " "
-            + answer.lower()
-        )
-
-        if any(word in text_all for word in [
-            "стоимость",
-            "цена",
-            "сколько",
-            "бюджет"
-        ]):
-            pipeline_stage = "pricing"
-
-        elif any(word in text_all for word in [
-            "созвон",
-            "консультация",
-            "обсудить",
-            "связаться"
-        ]):
-            pipeline_stage = "consultation"
-
-        elif ai_temp == "hot":
-            pipeline_stage = "hot"
-
-        elif ai_temp == "warm":
-            pipeline_stage = "interested"
-
-        ai_temp_prompt = f"""
-            Определи температуру лида.
-
-            Варианты:
-            - hot
-            - warm
-            - cold
-
-            HOT:
-            - хочет внедрение
-            - просит цену
-            - просит сроки
-            - готов обсуждать
-            - оставил контакт
-
-            WARM:
-            - есть интерес
-            - задает вопросы
-            - изучает
-
-            COLD:
-            - слабый интерес
-            - просто общается
-
-            Диалог:
-            Клиент: {message.text}
-
-            AI:
-            {answer}
-
-            Ответь только одним словом:
-            hot / warm / cold
-        
-            """             
-
-        ai_temp_response = client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Ты AI CRM аналитик."
-                    },
-                    {
-                        "role": "user",
-                        "content": ai_temp_prompt
-                    }
-                ],
-                temperature=0.1,
-                max_tokens=5,
-            )
-
-        ai_temp = (
-                ai_temp_response
-                .choices[0]
-                .message
-                .content
-                .strip()
-                .lower()
-            )
-
         supabase.table("leads").update({
             "summary": summary,
             "stage": "dialog",
@@ -1461,31 +1402,31 @@ Summary:
             "ai_notes": ai_notes_text,
             "last_message_at": datetime.utcnow().isoformat()
         }).eq("chat_id", str(chat_id)).execute()
-        
+
         if ai_temp == "hot":
 
-                try:
+            try:
 
-                    bot.send_message(
-                        1908342578,
-                        f"🔥 HOT LEAD\n\n"
+                bot.send_message(
+                    1908342578,
+                    f"🔥 HOT LEAD\n\n"
 
-                        f"👤 Клиент: "
-                        f"{message.from_user.first_name}\n\n"
+                    f"👤 Клиент: "
+                    f"{message.from_user.first_name}\n\n"
 
-                        f"🌡 Температура: {ai_temp}\n"
-                        f"📍 Этап: {pipeline_stage}\n"
-                        f"📊 Score: {score}\n\n"
+                    f"🌡 Температура: {ai_temp}\n"
+                    f"📍 Этап: {pipeline_stage}\n"
+                    f"📊 Вероятность сделки: {close_probability}%\n\n"
 
-                        f"💬 Сообщение:\n"
-                        f"{message.text}\n\n"
+                    f"💬 Сообщение:\n"
+                    f"{message.text}\n\n"
 
-                        f"🧠 AI Summary:\n"
-                        f"{summary[:500]}"
-                    )
+                    f"🧠 AI Summary:\n"
+                    f"{summary[:500]}"
+                )
 
-                except Exception as notify_error:
-                    print("Notify error:", notify_error)
+            except Exception as notify_error:
+                print("Notify error:", notify_error)
 
         user_memory[chat_id].append({
             "role": "assistant",
@@ -1518,7 +1459,9 @@ def webhook():
 def index():
     return "Bot is running!", 200
 
+
 def send_followups():
+
     from datetime import timezone
 
     now = datetime.now(timezone.utc)
@@ -1548,15 +1491,13 @@ def send_followups():
         lead_temp = lead.get("lead_temp", "cold")
 
         text = None
-        next_step = step
-
-        text = None
         next_step = followup_step
 
         # HOT LEADS
         if priority == "high":
 
             if followup_step == 0 and diff >= timedelta(minutes=30):
+
                 text = (
                     "Посмотрел вашу задачу 👌\n\n"
                     "Уже вижу несколько точек, "
@@ -1564,18 +1505,22 @@ def send_followups():
                     "и сократить ручную работу.\n\n"
                     "Если актуально — можем обсудить."
                 )
+
                 next_step = 1
 
             elif followup_step == 1 and diff >= timedelta(hours=4):
+
                 text = (
                     "Подготовил несколько вариантов "
                     "автоматизации под ваш бизнес.\n\n"
                     "Могу показать, как это обычно "
                     "реализуется на практике 👌"
                 )
+
                 next_step = 2
 
             elif followup_step == 2 and diff >= timedelta(hours=24):
+
                 text = (
                     "Сейчас многие теряют клиентов "
                     "из-за медленной обработки заявок.\n\n"
@@ -1585,41 +1530,47 @@ def send_followups():
                     "Если хотите — подготовлю пример "
                     "под вашу нишу 👌"
                 )
-                next_step = 3
 
+                next_step = 3
 
         # MEDIUM LEADS
         elif priority == "medium":
 
             if followup_step == 0 and diff >= timedelta(hours=2):
+
                 text = (
                     "Посмотрел вашу задачу 👌\n\n"
                     "Есть несколько идей, "
                     "как улучшить обработку заявок "
                     "и автоматизировать часть работы."
                 )
+
                 next_step = 1
 
             elif followup_step == 1 and diff >= timedelta(hours=24):
+
                 text = (
                     "Если задача еще актуальна — "
                     "могу показать пример решения "
                     "под ваш бизнес 👌"
                 )
-                next_step = 2
 
+                next_step = 2
 
         # LOW LEADS
         else:
 
             if followup_step == 0 and diff >= timedelta(hours=24):
+
                 text = (
                     "Если вопрос автоматизации "
                     "для вас еще актуален — "
                     "напишите 👌"
                 )
-                next_step = 1 
-                # RE-ENGAGEMENT
+
+                next_step = 1
+
+        # RE-ENGAGEMENT
         if (
             not text
             and not reanimate_sent
@@ -1668,17 +1619,20 @@ def send_followups():
                     "followup_step": next_step,
                     "followup_sent": True if next_step >= 3 else False,
                     "reanimate_sent": True if diff >= timedelta(days=7) else reanimate_sent
-                }).eq("chat_id", lead["chat_id"]).execute()    
+                }).eq("chat_id", lead["chat_id"]).execute()
 
             except:
                 pass
 
-# send_followups()           
+
+# send_followups()
 print("Webhook started")
 
 if __name__ == "__main__":
+
     if os.getenv("MODE") == "followup":
         send_followups()
+
     else:
         port = int(os.environ.get("PORT", 10000))
         app.run(host="0.0.0.0", port=port)
