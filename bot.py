@@ -1218,6 +1218,11 @@ def send_followups():
 
     for lead in rows.data:
 
+        followup_step = lead.get("followup_step", 0)
+        priority = lead.get("priority_level", "low")
+        probability = lead.get("close_probability", 0)
+        reanimate_sent = lead.get("reanimate_sent", False)
+
         if not lead.get("last_message_at"):
             continue
 
@@ -1232,69 +1237,110 @@ def send_followups():
         text = None
         next_step = step
 
-                # 2 часа
-        if step == 0 and diff >= timedelta(hours=2):
+        text = None
+        next_step = followup_step
 
-            if lead_temp == "hot":
+        # HOT LEADS
+        if priority == "high":
 
-                text = (
-                    "Подготовил идеи именно под вашу задачу 👌\n\n"
-                    "Уже вижу, где можно сократить потерю заявок "
-                    "и автоматизировать обработку клиентов.\n\n"
-                    "Если актуально — оставьте контакт "
-                    "и подготовлю конкретный план внедрения."
-                )
-
-            elif lead_temp == "warm":
-
+            if followup_step == 0 and diff >= timedelta(minutes=30):
                 text = (
                     "Посмотрел вашу задачу 👌\n\n"
-                    "Во многих нишах AI уже помогает:\n"
-                    "— ускорять ответы\n"
-                    "— собирать заявки\n"
-                    "— снижать ручную работу\n\n"
-                    "Если интересно — покажу примеры."
+                    "Уже вижу несколько точек, "
+                    "где можно увеличить продажи "
+                    "и сократить ручную работу.\n\n"
+                    "Если актуально — можем обсудить."
+                )
+                next_step = 1
+
+            elif followup_step == 1 and diff >= timedelta(hours=4):
+                text = (
+                    "Подготовил несколько вариантов "
+                    "автоматизации под ваш бизнес.\n\n"
+                    "Могу показать, как это обычно "
+                    "реализуется на практике 👌"
+                )
+                next_step = 2
+
+            elif followup_step == 2 and diff >= timedelta(hours=24):
+                text = (
+                    "Сейчас многие теряют клиентов "
+                    "из-за медленной обработки заявок.\n\n"
+                    "AI и CRM обычно окупаются "
+                    "довольно быстро за счет скорости "
+                    "обработки клиентов.\n\n"
+                    "Если хотите — подготовлю пример "
+                    "под вашу нишу 👌"
+                )
+                next_step = 3
+
+
+        # MEDIUM LEADS
+        elif priority == "medium":
+
+            if followup_step == 0 and diff >= timedelta(hours=2):
+                text = (
+                    "Посмотрел вашу задачу 👌\n\n"
+                    "Есть несколько идей, "
+                    "как улучшить обработку заявок "
+                    "и автоматизировать часть работы."
+                )
+                next_step = 1
+
+            elif followup_step == 1 and diff >= timedelta(hours=24):
+                text = (
+                    "Если задача еще актуальна — "
+                    "могу показать пример решения "
+                    "под ваш бизнес 👌"
+                )
+                next_step = 2
+
+
+        # LOW LEADS
+        else:
+
+            if followup_step == 0 and diff >= timedelta(hours=24):
+                text = (
+                    "Если вопрос автоматизации "
+                    "для вас еще актуален — "
+                    "напишите 👌"
+                )
+                next_step = 1 
+                # RE-ENGAGEMENT
+        if (
+            not text
+            and not reanimate_sent
+            and diff >= timedelta(days=7)
+        ):
+
+            if priority == "high":
+
+                text = (
+                    "Посмотрел ваш прошлый запрос 👌\n\n"
+                    "За это время подготовил еще несколько "
+                    "идей, как можно автоматизировать "
+                    "обработку клиентов и сократить "
+                    "потерю заявок.\n\n"
+                    "Если задача еще актуальна — "
+                    "напишите."
+                )
+
+            elif priority == "medium":
+
+                text = (
+                    "Если вопрос автоматизации "
+                    "для вас еще актуален — "
+                    "могу показать несколько "
+                    "готовых решений под ваш бизнес 👌"
                 )
 
             else:
 
                 text = (
-                    "Сейчас многие компании внедряют "
-                    "AI-ассистентов и CRM автоматизацию.\n\n"
-                    "Это помогает не терять заявки "
-                    "и быстрее обрабатывать клиентов 👌"
+                    "Если захотите вернуться "
+                    "к вопросу AI автоматизации — "
+                    "напишите 👌"
                 )
-
-            next_step = 1
-
-        # 24 часа
-        elif step == 1 and diff >= timedelta(hours=24):
-
-            text = (
-                "Подготовил еще идеи по автоматизации "
-                "под ваш бизнес.\n\n"
-                "Можно внедрить CRM, AI-ассистента "
-                "и автоматический сбор заявок "
-                "в одну систему.\n\n"
-                "Если интересно — могу показать пример."
-            )
-
-            next_step = 2
-
-        # 3 дня
-        elif step == 2 and diff >= timedelta(days=3):
-
-            text = (
-                "Часто компании теряют заявки "
-                "из-за ручной обработки.\n\n"
-                "Автоматизация обычно окупается "
-                "довольно быстро за счет скорости "
-                "обработки клиентов.\n\n"
-                "Если хотите — подготовлю пример "
-                "под вашу нишу 👌"
-            )
-
-            next_step = 3
 
         if text:
 
@@ -1305,9 +1351,10 @@ def send_followups():
                     text
                 )
 
-                supabase.table("leads").update({
-                    "followup_step": next_step
-                }).eq("chat_id", lead["chat_id"]).execute()
+            supabase.table("leads").update({
+                "followup_step": next_step,
+                "reanimate_sent": True if diff >= timedelta(days=7) else reanimate_sent
+            }).eq("chat_id", lead["chat_id"]).execute()    
 
             except:
                 pass
