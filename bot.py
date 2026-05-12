@@ -858,14 +858,42 @@ Summary:
         )
 
         answer = response.choices[0].message.content
-        summary = f"""
-        Ниша: {lead_data.get(chat_id, {}).get("niche", "")}
-        Боль: {lead_data.get(chat_id, {}).get("pain", "")}
-        Цель: {lead_data.get(chat_id, {}).get("goal", "")}
+        summary_prompt = f"""
+        Суммаризируй клиента для CRM.
 
-        Последний запрос клиента:
-        {message.text}
+        Кратко укажи:
+        - чем занимается
+        - боли
+        - цели
+        - интерес
+        - что обсуждали
+        - стадия готовности
+        - есть ли контакт
+
+        Диалог:
+        Клиент: {message.text}
+
+        AI:
+        {answer}
         """
+
+        summary_response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты AI CRM аналитик."
+                },
+                {
+                    "role": "user",
+                    "content": summary_prompt
+                }
+            ],
+            temperature=0.2,
+            max_tokens=200,
+            )
+
+        summary = summary_response.choices[0].message.content
 
         supabase.table("leads").update({
             "summary": summary,
