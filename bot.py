@@ -1351,13 +1351,14 @@ def send_followups():
                     text
                 )
 
-            supabase.table("leads").update({
-                "followup_step": next_step,
-                "reanimate_sent": True if diff >= timedelta(days=7) else reanimate_sent
-            }).eq("chat_id", lead["chat_id"]).execute()    
+                supabase.table("leads").update({
+                    "followup_step": next_step,
+                    "reanimate_sent": True if diff >= timedelta(days=7) else reanimate_sent
+                }).eq("chat_id", lead["chat_id"]).execute()    
 
             except:
                 pass
+            
 # send_followups()           
 print("Webhook started")
 
