@@ -1,5 +1,6 @@
 import re
 import os
+import json
 from datetime import datetime, timedelta
 
 from flask import Flask, request
@@ -1164,6 +1165,19 @@ Summary:
                 .message
                 .content
             )
+        ai_stage = "new"
+        ai_next_step = "send_case"
+
+        if client_type == "hot":
+            ai_stage = "closing"
+            ai_next_step = "request_contact"
+
+        elif client_type == "warm":
+            ai_stage = "qualification"
+            ai_next_step = "show_examples"
+
+        if pain_level == "high":
+            ai_next_step = "schedule_call"
 
         pain_level = "low"
         client_type = "cold"
@@ -1368,6 +1382,8 @@ Summary:
             "pain_level": pain_level,
             "client_type": client_type,
             "ai_notes": ai_notes_text,
+            "ai_stage": ai_stage,
+            "ai_next_step": ai_next_step,
             "last_message_at": datetime.utcnow().isoformat()
         }).eq("chat_id", str(chat_id)).execute()
 
