@@ -1,6 +1,9 @@
 import re
 import os
 import json
+
+phone_pattern = r"(\+7|8)?[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
+
 from datetime import datetime, timedelta
 
 from flask import Flask, request
@@ -385,6 +388,12 @@ def start(message):
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
+    if not message.text:
+        bot.reply_to(
+            message,
+            "Пожалуйста, отправьте текстовое сообщение."
+        )
+        return
     try:
         chat_id = message.chat.id
         text = message.text.lower()
@@ -409,9 +418,8 @@ Summary:
 {db_lead.get('summary', '')}
 """
        
-        phone_pattern = r"\+?\d[\d\-\(\) ]{8,}\d"
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
-
+     
         # если человек уже в воронке
         if chat_id in lead_state:
             step = lead_state[chat_id]
@@ -902,7 +910,7 @@ Summary:
                 close_probability = 100
             if lead_score > 100:
                 lead_score = 100
-                
+
             ai_stage = "new"
             ai_brief = ""
             ai_next_step = ""
