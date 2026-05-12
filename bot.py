@@ -873,24 +873,30 @@ Summary:
 
             if pipeline_stage == "pricing":
                 close_probability += 20
+                lead_score += 20
 
             elif pipeline_stage == "consultation":
                 close_probability += 25
+                lead_score += 25
 
             elif pipeline_stage == "hot":
                 close_probability += 35
+                lead_score += 35
 
             if budget_level == "high":
                 close_probability += 20
+                lead_score += 20
 
             elif budget_level == "medium":
                 close_probability += 10
+                lead_score += 10
 
             if (
                 re.search(phone_pattern, message.text)
                 or "@" in message.text
             ):
                 close_probability += 25
+                lead_score += 25
 
             if close_probability > 100:
                 close_probability = 100
