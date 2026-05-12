@@ -866,6 +866,69 @@ Summary:
 
         answer = response.choices[0].message.content
         summary_prompt = f"""
+        ai_notes_prompt = f"""
+        Ты AI CRM аналитик.
+
+        Проанализируй клиента.
+
+        Диалог:
+        {summary}
+
+        Ответь JSON форматом:
+
+        {{
+            "pain_level": "...",
+            "client_type": "...",
+            "ai_notes": "..."
+        }}
+
+        pain_level:
+        low / medium / high
+
+        client_type:
+        cold / warm / hot
+
+        ai_notes:
+        краткая заметка менеджеру
+        """
+
+        ai_notes_response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты AI CRM аналитик."
+                },
+                {
+                    "role": "user",
+                    "content": ai_notes_prompt
+                }
+            ],
+            temperature=0.1,
+            max_tokens=120,
+        )
+                    ai_notes_text = (
+                ai_notes_response
+                .choices[0]
+                .message
+                .content
+            )
+
+            pain_level = "low"
+            client_type = "cold"
+
+            if "high" in ai_notes_text:
+                pain_level = "high"
+
+            elif "medium" in ai_notes_text:
+                pain_level = "medium"
+
+            if '"client_type": "hot"' in ai_notes_text:
+                client_type = "hot"
+
+            elif '"client_type": "warm"' in ai_notes_text:
+                client_type = "warm"
+
         Суммаризируй клиента для CRM.
 
         Кратко укажи:
@@ -1139,15 +1202,18 @@ Summary:
             )
 
         supabase.table("leads").update({
-                "summary": summary,
-                "stage": "dialog",
-                "lead_temp": ai_temp,
-                "pipeline_stage": pipeline_stage,
-                "budget_level": budget_level,
-                "priority_level": priority_level,
-                "close_probability": close_probability,
-                "last_message_at": datetime.utcnow().isoformat()
-            }).eq("chat_id", str(chat_id)).execute()
+            "summary": summary,
+            "stage": "dialog",
+            "lead_temp": ai_temp,
+            "pipeline_stage": pipeline_stage,
+            "budget_level": budget_level,
+            "priority_level": priority_level,
+            "close_probability": close_probability,
+            "pain_level": pain_level,
+            "client_type": client_type,
+            "ai_notes": ai_notes_text,
+            "last_message_at": datetime.utcnow().isoformat()
+        }).eq("chat_id", str(chat_id)).execute()
         
         if ai_temp == "hot":
 
@@ -1358,7 +1424,7 @@ def send_followups():
 
             except:
                 pass
-            
+
 # send_followups()           
 print("Webhook started")
 
