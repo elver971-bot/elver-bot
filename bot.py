@@ -972,6 +972,23 @@ Summary:
                 .strip()
                 .lower()
             )
+        # приоритет лида
+        priority_level = "low"
+
+        if ai_temp == "hot":
+            priority_level = "high"
+
+        elif ai_temp == "warm":
+            priority_level = "medium"
+
+        close_probability = 10
+
+        # горячий лид
+        if ai_temp == "hot":
+            close_probability += 40
+
+        elif ai_temp == "warm":
+            close_probability += 20
         
         pipeline_stage = "new"
 
@@ -1004,6 +1021,35 @@ Summary:
             "нет денег"
         ]):
             budget_level = "low"
+        # вероятность закрытия сделки
+
+        # этап сделки
+        if pipeline_stage == "pricing":
+            close_probability += 20
+
+        elif pipeline_stage == "consultation":
+            close_probability += 25
+
+        elif pipeline_stage == "hot":
+            close_probability += 35
+
+        # бюджет
+        if budget_level == "high":
+            close_probability += 20
+
+        elif budget_level == "medium":
+            close_probability += 10
+
+        # есть контакт
+        if (
+            re.search(phone_pattern, message.text)
+            or "@" in message.text
+        ):
+            close_probability += 25
+
+        # ограничение
+        if close_probability > 100:
+            close_probability = 100
 
         text_all = (
             message.text.lower()
@@ -1099,6 +1145,7 @@ Summary:
                 "pipeline_stage": pipeline_stage,
                 "budget_level": budget_level,
                 "priority_level": priority_level,
+                "close_probability": close_probability,
                 "last_message_at": datetime.utcnow().isoformat()
             }).eq("chat_id", str(chat_id)).execute()
         
