@@ -820,49 +820,7 @@ def chat(message):
             # CLOSE PROBABILITY
             # =========================================
 
-            close_probability = 10
-            lead_score = 0
-
-            if ai_temp == "hot":
-                close_probability += 40
-                lead_score += 40
-
-            elif ai_temp == "warm":
-                close_probability += 20
-                lead_score += 20
-
-            if pipeline_stage == "pricing":
-                close_probability += 20
-                lead_score += 20
-
-            elif pipeline_stage == "consultation":
-                close_probability += 25
-                lead_score += 25
-
-            elif pipeline_stage == "hot":
-                close_probability += 35
-                lead_score += 35
-
-            if budget_level == "high":
-                close_probability += 20
-                lead_score += 20
-
-            elif budget_level == "medium":
-                close_probability += 10
-                lead_score += 10
-
-            if (
-                re.search(phone_pattern, message.text)
-                or "@" in message.text
-            ):
-                close_probability += 25
-                lead_score += 25
-
-            if close_probability > 100:
-                close_probability = 100
-            if lead_score > 100:
-                lead_score = 100
-
+            
             ai_stage = "new"
             ai_brief = ""
             ai_next_step = ""
@@ -1295,7 +1253,7 @@ def chat(message):
             .strip()
             .lower()
         )
-        
+
         if ai_temp not in ["hot", "warm", "cold"]:
             ai_temp = "cold"
 
@@ -1309,13 +1267,16 @@ def chat(message):
             priority_level = "medium"
 
         close_probability = 10
+        lead_score = 0
 
         # горячий лид
         if ai_temp == "hot":
             close_probability += 40
+            lead_score += 40
 
         elif ai_temp == "warm":
             close_probability += 20
+            lead_score += 20
 
         pipeline_stage = "new"
 
@@ -1360,6 +1321,7 @@ def chat(message):
             "бюджет"
         ]):
             pipeline_stage = "pricing"
+            lead_score += 20
 
         elif any(word in text_all for word in [
             "созвон",
@@ -1368,9 +1330,11 @@ def chat(message):
             "связаться"
         ]):
             pipeline_stage = "consultation"
+            lead_score += 25
 
         elif ai_temp == "hot":
             pipeline_stage = "hot"
+            lead_score += 35
 
         elif ai_temp == "warm":
             pipeline_stage = "interested"
@@ -1389,9 +1353,11 @@ def chat(message):
         # бюджет
         if budget_level == "high":
             close_probability += 20
+            lead_score += 20
 
         elif budget_level == "medium":
             close_probability += 10
+            lead_score += 10
 
         # есть контакт
         if (
@@ -1399,10 +1365,14 @@ def chat(message):
             or "@" in message.text
         ):
             close_probability += 25
+            lead_score += 25
 
         # ограничение
         if close_probability > 100:
             close_probability = 100
+
+        if lead_score > 100:
+            lead_score = 100    
 
         supabase.table("leads").update({
             "summary": summary,
