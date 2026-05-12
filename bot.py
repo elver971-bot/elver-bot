@@ -695,22 +695,21 @@ Summary:
                 .message
                 .content
             )
+        import json
 
-            pain_level = "low"
-            client_type = "cold"
+        try:
 
-            if "high" in ai_notes_text:
-                pain_level = "high"
+            ai_notes_data = json.loads(ai_notes_text)
 
-            elif "medium" in ai_notes_text:
-                pain_level = "medium"
+            pain_level = ai_notes_data.get("pain_level", "low")
+            client_type = ai_notes_data.get("client_type", "cold")
+            ai_notes_text = ai_notes_data.get("ai_notes", "")
 
-            if '"client_type": "hot"' in ai_notes_text:
-                client_type = "hot"
+        except Exception as json_error:
 
-            elif '"client_type": "warm"' in ai_notes_text:
-                client_type = "warm"
+            print("JSON parse error:", json_error)
 
+            
             # =========================================
             # LEAD TEMPERATURE
             # =========================================
