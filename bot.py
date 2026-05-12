@@ -902,6 +902,10 @@ Summary:
                 close_probability = 100
             if lead_score > 100:
                 lead_score = 100
+                
+            ai_stage = "new"
+            ai_brief = ""
+            ai_next_step = ""
 
             try:
                 supabase.table("leads").update({
