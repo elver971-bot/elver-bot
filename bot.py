@@ -1160,7 +1160,7 @@ Summary:
                 .content
             )
 
-                pain_level = "low"
+        pain_level = "low"
         client_type = "cold"
 
         if "high" in ai_notes_text:
