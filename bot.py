@@ -954,6 +954,65 @@ Summary:
                 .lower()
             )
 
+        ai_temp_prompt = f"""
+            Определи температуру лида.
+
+            Варианты:
+            - hot
+            - warm
+            - cold
+
+            HOT:
+            - хочет внедрение
+            - просит цену
+            - просит сроки
+            - готов обсуждать
+            - оставил контакт
+
+            WARM:
+            - есть интерес
+            - задает вопросы
+            - изучает
+
+            COLD:
+            - слабый интерес
+            - просто общается
+
+            Диалог:
+            Клиент: {message.text}
+
+            AI:
+            {answer}
+
+            Ответь только одним словом:
+            hot / warm / cold
+            """
+
+        ai_temp_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": ai_temp_prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=5,
+            )
+
+        ai_temp = (
+                ai_temp_response
+                .choices[0]
+                .message
+                .content
+                .strip()
+                .lower()
+            )
+
         supabase.table("leads").update({
                 "summary": summary,
                 "stage": "dialog",
@@ -1014,20 +1073,43 @@ def send_followups():
 
         diff = now - last
         step = lead.get("followup_step", 0)
+        lead_temp = lead.get("lead_temp", "cold")
 
         text = None
         next_step = step
 
-        # 2 часа
+                # 2 часа
         if step == 0 and diff >= timedelta(hours=2):
 
-            text = (
-                "Посмотрел вашу задачу 👌\n\n"
-                "Уже вижу несколько вариантов, "
-                "как сократить ручную работу "
-                "и ускорить обработку заявок.\n\n"
-                "Если актуально — напишите."
-            )
+            if lead_temp == "hot":
+
+                text = (
+                    "Подготовил идеи именно под вашу задачу 👌\n\n"
+                    "Уже вижу, где можно сократить потерю заявок "
+                    "и автоматизировать обработку клиентов.\n\n"
+                    "Если актуально — оставьте контакт "
+                    "и подготовлю конкретный план внедрения."
+                )
+
+            elif lead_temp == "warm":
+
+                text = (
+                    "Посмотрел вашу задачу 👌\n\n"
+                    "Во многих нишах AI уже помогает:\n"
+                    "— ускорять ответы\n"
+                    "— собирать заявки\n"
+                    "— снижать ручную работу\n\n"
+                    "Если интересно — покажу примеры."
+                )
+
+            else:
+
+                text = (
+                    "Сейчас многие компании внедряют "
+                    "AI-ассистентов и CRM автоматизацию.\n\n"
+                    "Это помогает не терять заявки "
+                    "и быстрее обрабатывать клиентов 👌"
+                )
 
             next_step = 1
 
