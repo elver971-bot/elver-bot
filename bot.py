@@ -1065,7 +1065,7 @@ Summary:
 
             Ответь только одним словом:
             hot / warm / cold
-            """
+            """             
 
         ai_temp_response = client.chat.completions.create(
                 model="gpt-4.1-mini",
@@ -1098,6 +1098,7 @@ Summary:
                 "lead_temp": ai_temp,
                 "pipeline_stage": pipeline_stage,
                 "budget_level": budget_level,
+                "priority_level": priority_level,
                 "last_message_at": datetime.utcnow().isoformat()
             }).eq("chat_id", str(chat_id)).execute()
         
