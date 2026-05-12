@@ -1161,6 +1161,8 @@ def chat(message):
         Ответь только одним словом:
         hot / warm / cold
         """
+        print("TEMP START")
+
         ai_temp_response = client.chat.completions.create(
             model="gpt-4.1-mini",
             messages=[
@@ -1176,6 +1178,7 @@ def chat(message):
             temperature=0.1,
             max_tokens=5,
         )
+        print("TEMP OK", ai_temp)
 
         ai_temp = (
             ai_temp_response
