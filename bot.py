@@ -695,14 +695,7 @@ Summary:
             if score >= 70:
                 lead_temp = "hot"
 
-                bot.send_message(
-                    1908342578,
-                    f"🔥 ГОРЯЧИЙ ЛИД\n\n"
-                    f"Клиент: {message.from_user.first_name}\n"
-                    f"Score: {score}\n"
-                    f"Сообщение: {message.text}"
-                )
-
+                
             elif score >= 40:
                 lead_temp = "warm"
 
@@ -1050,6 +1043,31 @@ Summary:
                 "pipeline_stage": pipeline_stage,
                 "last_message_at": datetime.utcnow().isoformat()
             }).eq("chat_id", str(chat_id)).execute()
+        
+        if ai_temp == "hot":
+
+                try:
+
+                    bot.send_message(
+                        1908342578,
+                        f"🔥 HOT LEAD\n\n"
+
+                        f"👤 Клиент: "
+                        f"{message.from_user.first_name}\n\n"
+
+                        f"🌡 Температура: {ai_temp}\n"
+                        f"📍 Этап: {pipeline_stage}\n"
+                        f"📊 Score: {score}\n\n"
+
+                        f"💬 Сообщение:\n"
+                        f"{message.text}\n\n"
+
+                        f"🧠 AI Summary:\n"
+                        f"{summary[:500]}"
+                    )
+
+                except Exception as notify_error:
+                    print("Notify error:", notify_error)
 
         user_memory[chat_id].append({
             "role": "assistant",
