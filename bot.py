@@ -1295,6 +1295,9 @@ def chat(message):
             .strip()
             .lower()
         )
+        
+        if ai_temp not in ["hot", "warm", "cold"]:
+            ai_temp = "cold"
 
         # приоритет лида
         priority_level = "low"
