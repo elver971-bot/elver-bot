@@ -884,6 +884,8 @@ Summary:
 
             if close_probability > 100:
                 close_probability = 100
+
+            try:
                 supabase.table("leads").update({
                     "ai_stage": ai_stage,
                     "ai_brief": ai_brief,
@@ -891,7 +893,7 @@ Summary:
                 }).eq("chat_id", str(chat_id)).execute()
 
             except Exception as brief_error:
-            print("Brief error:", brief_error)
+                print("Brief error:", brief_error)
             
             score = 0
 
