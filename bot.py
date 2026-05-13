@@ -550,12 +550,27 @@ SYSTEM_PROMPT = """
 — называй диапазон от среднего и выше рынка
 
 Не создавай ощущение дешевого бота фриланса.
+
+Если пользователь пишет не по теме бизнеса, AI, CRM или автоматизации:
+— отвечай коротко
+— не поддерживай длинный разговор
+— возвращай к теме автоматизации
+
+Не работай как обычный ChatGPT.
 """
 
 
 @bot.message_handler(commands=["start"])
 def start(message):
     chat_id = message.chat.id
+
+    if message.chat.type in ["group", "supergroup"]:
+
+        if (
+            not message.text.startswith("/")
+            and "@" not in message.text
+        ):
+            return
 
     lead = supabase.table("leads") \
         .select("*") \
