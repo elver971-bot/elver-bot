@@ -396,6 +396,22 @@ def chat(message):
         return
     try:
         chat_id = message.chat.id
+    
+    try:
+        chat_id = message.chat.id
+
+        ai_temp = "cold"
+        ai_temp_response = None
+        pipeline_stage = "new"
+        budget_level = "unknown"
+        priority_level = "low"
+        close_probability = 0
+        lead_score = 0
+        pain_level = "low"
+        client_type = "cold"
+
+        user_text = message.text.strip()
+        text = user_text.lower()
 
         user_text = message.text.strip()
         text = user_text.lower()
