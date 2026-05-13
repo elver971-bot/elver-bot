@@ -759,9 +759,8 @@ def chat(message):
             # =========================================
             # BUDGET
             # =========================================
-            
-            text_all = f"{message.text} {answer} {summary}".lower()
 
+           
             budget_level = "unknown"
 
             if any(word in text_all for word in [
@@ -1160,6 +1159,8 @@ def chat(message):
             summary = summary_response.choices[0].message.content
         else:
             summary = "Нет summary"
+
+        text_all = f"{message.text} {answer} {summary}".lower()
 
         ai_temp_prompt = f"""
         Определи температуру лида.
