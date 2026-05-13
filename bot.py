@@ -1193,15 +1193,18 @@ def chat(message):
             temperature=0.1,
             max_tokens=5,
         )
+        if not ai_temp_response:
+            ai_temp = "cold"
+        else:
+            ai_temp = (
+                ai_temp_response
+                .choices[0]
+                .message
+                .content
+                .strip()
+                .lower()
+            )
         
-        ai_temp = (
-            ai_temp_response
-            .choices[0]
-            .message
-            .content
-            .strip()
-            .lower()
-        )
         print("TEMP OK", ai_temp)
 
         if ai_temp not in ["hot", "warm", "cold"]:
