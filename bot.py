@@ -474,6 +474,28 @@ def start(message):
         .execute()
 
     lead_info = ""
+    lead_exists = (
+    supabase.table("leads")
+    .select("id")
+    .eq("chat_id", str(chat_id))
+    .execute()
+    )
+
+    if not lead_exists.data:
+
+        supabase.table("leads").insert({
+            "chat_id": str(chat_id),
+            "name": message.from_user.first_name or "Без имени",
+            "username": (
+                f"@{message.from_user.username}"
+                if message.from_user.username
+                else "нет"
+            ),
+            "stage": "new",
+            "lead_temp": "cold",
+            "lead_score": 0,
+            "last_message_at": datetime.utcnow().isoformat()
+        }).execute()
 
     if lead.data:
         db_lead = lead.data[0]
@@ -569,6 +591,50 @@ def chat(message):
         )
 
         lead_info = ""
+        lead_exists = (
+            supabase.table("leads")
+            .select("id")
+            .eq("chat_id", str(chat_id))
+            .execute()
+        )
+        lead_exists = (
+            supabase.table("leads")
+            .select("id")
+            .eq("chat_id", str(chat_id))
+            .execute()
+        )
+
+        if not lead_exists.data:
+
+            supabase.table("leads").insert({
+                "chat_id": str(chat_id),
+                "name": message.from_user.first_name or "Без имени",
+                "username": (
+                    f"@{message.from_user.username}"
+                    if message.from_user.username
+                    else "нет"
+                ),
+                "stage": "new",
+                "lead_temp": "cold",
+                "lead_score": 0,
+                "last_message_at": datetime.utcnow().isoformat()
+            }).execute()
+
+        if not lead_exists.data:
+
+            supabase.table("leads").insert({
+                "chat_id": str(chat_id),
+                "name": message.from_user.first_name or "Без имени",
+                "username": (
+                    f"@{message.from_user.username}"
+                    if message.from_user.username
+                    else "нет"
+                ),
+                "stage": "new",
+                "lead_temp": "cold",
+                "lead_score": 0,
+                "last_message_at": datetime.utcnow().isoformat()
+            }).execute()
 
         if lead.data:
 
@@ -1061,6 +1127,17 @@ hot / warm / cold
             "role": "assistant",
             "content": answer
         })
+        try:
+
+            history_text = str(user_memory[chat_id])
+
+            supabase.table("leads").update({
+                "ai_history": history_text
+            }).eq("chat_id", str(chat_id)).execute()
+
+        except Exception as history_error:
+
+            print("HISTORY SAVE ERROR:", history_error)
 
         # =========================================
         # HOT LEAD NOTIFY
