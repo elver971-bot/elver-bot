@@ -1178,24 +1178,23 @@ def chat(message):
         """
         print("TEMP START")
 
-        ai_temp_response = client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Ты AI CRM аналитик."
-                },
-                {
-                    "role": "user",
-                    "content": ai_temp_prompt
-                }
-            ],
-            temperature=0.1,
-            max_tokens=5,
-        )
-        if not ai_temp_response:
-            ai_temp = "cold"
-        else:
+        try:
+            ai_temp_response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Ты AI CRM аналитик."
+                    },
+                    {
+                        "role": "user",
+                        "content": ai_temp_prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=5,
+            )
+
             ai_temp = (
                 ai_temp_response
                 .choices[0]
@@ -1204,9 +1203,14 @@ def chat(message):
                 .strip()
                 .lower()
             )
-        
-        print("TEMP OK", ai_temp)
 
+        except Exception as temp_error:
+            print("TEMP ERROR:", temp_error)
+            ai_temp = "cold"
+
+        print("TEMP OK", ai_temp)
+        
+        
         if ai_temp not in ["hot", "warm", "cold"]:
             ai_temp = "cold"
 
