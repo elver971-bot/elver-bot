@@ -388,15 +388,22 @@ def start(message):
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
+
     if not message.text:
         bot.reply_to(
             message,
             "Пожалуйста, отправьте текстовое сообщение."
         )
         return
+
     try:
+
         chat_id = message.chat.id
-        
+
+        # =========================================
+        # DEFAULTS
+        # =========================================
+
         ai_temp = "cold"
         ai_temp_response = None
         pipeline_stage = "new"
@@ -407,20 +414,25 @@ def chat(message):
         pain_level = "low"
         client_type = "cold"
 
-        user_text = message.text.strip()
-        text = user_text.lower()
-
         answer = ""
         summary = ""
-        text_all = user_text.lower()
+        ai_notes_text = ""
+        contact_request = ""
 
         user_text = message.text.strip()
         text = user_text.lower()
+        text_all = text
 
-        lead = supabase.table("leads") \
-            .select("*") \
-            .eq("chat_id", str(chat_id)) \
+        # =========================================
+        # LOAD LEAD
+        # =========================================
+
+        lead = (
+            supabase.table("leads")
+            .select("*")
+            .eq("chat_id", str(chat_id))
             .execute()
+        )
 
         lead_info = ""
 
@@ -429,162 +441,40 @@ def chat(message):
             db_lead = lead.data[0]
 
             lead_info = f"""
-        Ниша: {db_lead.get('niche', '')}
-        Боль: {db_lead.get('pain', '')}
-        Цель: {db_lead.get('goal', '')}
-        Этап: {db_lead.get('stage', '')}
+Ниша: {db_lead.get('niche', '')}
+Боль: {db_lead.get('pain', '')}
+Цель: {db_lead.get('goal', '')}
+Этап: {db_lead.get('stage', '')}
 
-        Summary:
-        {db_lead.get('summary', '')}
-        """
-       
+Summary:
+{db_lead.get('summary', '')}
+"""
+
+        # =========================================
+        # PATTERNS
+        # =========================================
+
         email_pattern = r"[^@]+@[^@]+\.[^@]+"
-     
-        # если человек уже в воронке
-        if chat_id in lead_state:
-            step = lead_state[chat_id]
 
-    #         if step == "wait_niche":
-    #             lead_data[chat_id]["niche"] = message.text
-    #             lead_state[chat_id] = "wait_pain"
+        # =========================================
+        # MEMORY
+        # =========================================
 
-    #             bot.reply_to(
-    #                 message,
-    #                 "Что сейчас больше всего мешает росту?\n\n"
-    #                 "Например:\n"
-    #                 "— мало заявок\n"
-    #                 "— дорогая реклама\n"
-    #                 "— слабые продажи"
-    #             )
-    #             return
+        if chat_id not in user_memory:
 
-    #         if step == "wait_pain":
-    #             lead_data[chat_id]["pain"] = message.text
-    #             lead_state[chat_id] = "wait_goal"
+            restored_history = None
 
-    #             bot.reply_to(
-    #                 message,
-    #                 "Что хотите автоматизировать в первую очередь?"
-    #             )
-    #             return
+            if lead.data:
+                db_lead = lead.data[0]
+                restored_history = db_lead.get("ai_history")
 
-    #         if step == "wait_goal":
-    #             lead_data[chat_id]["goal"] = message.text
-    #             segment, priority, offer_type = detect_segment(
-    #                 lead_data[chat_id]["niche"]
-    #             )
-    #             lead_data[chat_id]["segment"] = segment
-    #             lead_data[chat_id]["priority"] = priority
-    #             lead_data[chat_id]["offer_type"] = offer_type
-    #             lead_state[chat_id] = "wait_contact"
+            if restored_history:
 
-    #             pain = lead_data[chat_id]["pain"].lower()
-    #             goal = lead_data[chat_id]["goal"].lower()
+                try:
+                    user_memory[chat_id] = eval(restored_history)
 
-    #             score = 50
+                except Exception:
 
-    #             if any(word in pain for word in [
-    #                 "нет заявок",
-    #                 "мало клиентов",
-    #                 "дорого",
-    #                 "ручной",
-    #                 "долго",
-    #                 "теряем",
-    #             ]):
-    #                 score += 20
-
-    #             if any(word in goal for word in [
-    #                 "рост",
-    #                 "заявки",
-    #                 "автоматизация",
-    #                 "масштаб",
-    #                 "продажи",
-    #             ]):
-    #                 score += 30
-
-    #             lead_data[chat_id]["score"] = score
-    #             save_followup(chat_id, message, "wait_contact")
-
-    #             offer = make_offer(segment)
-
-    #             bot.reply_to(
-    #                 message,
-    #                 offer
-                    
-    #             )
-    #             return
-
-    #         if step == "wait_contact":
-    #             if (
-    #                 re.search(phone_pattern, message.text)
-    #                 or re.search(email_pattern, message.text)
-    #                 or "@" in message.text
-    #             ):
-                    
-            
-        
-    #                 supabase.table("leads").update({
-    #                     "name": message.from_user.first_name or "Без имени",
-    #                     "username": f"@{message.from_user.username}" if message.from_user.username else "нет",
-    #                     "phone": message.text,
-    #                     "chat_id": str(chat_id),
-    #                     "niche": lead_data[chat_id].get("niche", ""),
-    #                     "pain": lead_data[chat_id].get("pain", ""),
-    #                     "goal": lead_data[chat_id].get("goal", ""),
-    #                     "score": lead_data[chat_id].get("score", 0),
-    #                     "status": "new",
-    #                     "segment": lead_data[chat_id].get("segment", "other"),
-    #                     "priority": lead_data[chat_id].get("priority", "Normal"),
-    #                     "offer_type": lead_data[chat_id].get("offer_type", "standard"),
-    #                 }).eq("chat_id", str(chat_id)).execute()
-
-    #                 bot.send_message(
-    #                     1908342578,
-    #                   f"🔥 Новый лид\n\n"
-    #                   f"Приоритет: {lead_data[chat_id]['priority']}\n"
-    #                   f"Сегмент: {lead_data[chat_id]['offer_type']}\n"
-    #                   f"Score: {lead_data[chat_id]['score']}\n\n"
-    #                   f"Имя: {message.from_user.first_name}\n"
-    #                   f"Username: @{message.from_user.username}\n"
-    #                   f"Ниша: {lead_data[chat_id]['niche']}\n"
-    #                   f"Боль: {lead_data[chat_id]['pain']}\n"
-    #                   f"Цель: {lead_data[chat_id]['goal']}\n"
-    #                   f"Контакт: {message.text}"  
-    #                 )
-
-    #                 # del lead_state[chat_id]
-    #                 # del lead_data[chat_id]
-                    
-
-    #                 bot.reply_to(
-    #                     message,
-    #                     "Принял 👌\n\n"
-    #                     "Подготовлю конкретное предложение и свяжусь с вами 🚀"
-    #                 )
-    #                 return
-    
-            # else:
-            
-            if chat_id not in user_memory:
-
-                restored_history = None
-
-                if lead.data:
-                    db_lead = lead.data[0]
-                    restored_history = db_lead.get("ai_history")
-
-                if restored_history:
-                    try:
-                        user_memory[chat_id] = eval(restored_history)
-                    except:
-                        user_memory[chat_id] = [
-                            {
-                                "role": "system",
-                                "content": SYSTEM_PROMPT + "\n\n" + lead_info
-                            }
-                        ]
-
-                else:
                     user_memory[chat_id] = [
                         {
                             "role": "system",
@@ -592,556 +482,90 @@ def chat(message):
                         }
                     ]
 
-            user_memory[chat_id].append({
-                "role": "user",
-                "content": message.text
-            })
-
-            if len(user_memory[chat_id]) > 80:
-                user_memory[chat_id] = (
-                    [user_memory[chat_id][0]]
-                    + user_memory[chat_id][-11:]
-                )
-
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=user_memory[chat_id],
-                temperature=0.5,
-                max_tokens=500,
-            )
-
-            if response and response.choices:
-                answer = response.choices[0].message.content
             else:
-                answer = "Извините, произошла ошибка AI."
-            
-            # =========================================
-            # SUMMARY
-            # =========================================
 
-            summary_prompt = f"""
-            Суммаризируй клиента для CRM.
-
-            Кратко укажи:
-            - чем занимается
-            - боли
-            - цели
-            - интерес
-            - что обсуждали
-            - стадия готовности
-            - есть ли контакт
-
-            CRM данные:
-
-            Ниша:
-            {lead_data.get(chat_id, {}).get("niche", "")}
-
-            Боль:
-            {lead_data.get(chat_id, {}).get("pain", "")}
-
-            Цель:
-            {lead_data.get(chat_id, {}).get("goal", "")}
-
-            Диалог:
-
-            Клиент:
-            {message.text}
-
-            AI:
-            {answer}
-            """
-
-            summary_response = client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=[
+                user_memory[chat_id] = [
                     {
                         "role": "system",
-                        "content": "Ты AI CRM аналитик."
-                    },
-                    {
-                        "role": "user",
-                        "content": summary_prompt
+                        "content": SYSTEM_PROMPT + "\n\n" + lead_info
                     }
-                ],
-                temperature=0.2,
-                max_tokens=200,
-            )
+                ]
 
-            if summary_response and summary_response.choices:
-                summary = summary_response.choices[0].message.content
-            else:
-                summary = "Нет summary"
-            
-            # =========================================
-            # AI NOTES
-            # =========================================
-
-            ai_notes_prompt = f"""
-            Ты AI CRM аналитик.
-
-            Проанализируй клиента.
-
-            Диалог:
-            {summary}
-
-            Ответь JSON форматом:
-
-            {{
-                "pain_level": "...",
-                "client_type": "...",
-                "ai_notes": "..."
-            }}
-
-            pain_level:
-            low / medium / high
-
-            client_type:
-            cold / warm / hot
-
-            ai_notes:
-            краткая заметка менеджеру
-            """
-
-            ai_notes_response = client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Ты AI CRM аналитик."
-                    },
-                    {
-                        "role": "user",
-                        "content": ai_notes_prompt
-                    }
-                ],
-                temperature=0.1,
-                max_tokens=120,
-            )
-
-            ai_notes_text = (
-                ai_notes_response
-                .choices[0]
-                .message
-                .content
-            )
-        import json
-
-        try:
-
-            ai_notes_data = json.loads(ai_notes_text)
-
-            pain_level = ai_notes_data.get("pain_level", "low")
-            client_type = ai_notes_data.get("client_type", "cold")
-            ai_notes_text = ai_notes_data.get("ai_notes", "")
-
-        except Exception as json_error:
-
-            print("JSON parse error:", json_error)
-
-            
-            # =========================================
-            # LEAD TEMPERATURE
-            # =========================================
-
-            
-            if ai_temp_response and ai_temp_response.choices:
-                ai_temp = (
-                    ai_temp_response
-                    .choices[0]
-                    .message
-                    .content
-                    .strip()
-                    .lower()
-                )
-            else:
-                ai_temp = "cold"
-
-            # =========================================
-            # PRIORITY
-            # =========================================
-            
-            # =========================================
-            # BUDGET
-            # =========================================
-
-           
-            budget_level = "unknown"
-
-            if any(word in text_all for word in [
-                "500000",
-                "миллион",
-                "1 млн",
-                "2 млн",
-                "сеть",
-                "филиалы",
-                "отдел продаж"
-            ]):
-                budget_level = "high"
-
-            elif any(word in text_all for word in [
-                "100000",
-                "200000",
-                "50 сотрудников",
-                "crm",
-                "автоматизация"
-            ]):
-                budget_level = "medium"
-
-            elif any(word in text_all for word in [
-                "недорого",
-                "дешево",
-                "без бюджета",
-                "нет денег"
-            ]):
-                budget_level = "low"
-
-            # =========================================
-            # CLOSE PROBABILITY
-            # =========================================
-
-            
-            ai_stage = "new"
-            ai_brief = ""
-            ai_next_step = ""
-
-            try:
-                supabase.table("leads").update({
-                    "ai_stage": ai_stage,
-                    "ai_brief": ai_brief,
-                    "ai_next_step": ai_next_step
-                }).eq("chat_id", str(chat_id)).execute()
-
-            except Exception as brief_error:
-                print("Brief error:", brief_error)
-            
-            score = 0
-
-                          
-            # бюджет
-            if any(word in text_all for word in [
-                "бюджет",
-                "250",
-                "500",
-                "миллион",
-                "тысяч"
-            ]):
-                score += 25
-
-            # срочность
-            if any(word in text_all for word in [
-                "сегодня",
-                "срочно",
-                "быстро",
-                "сейчас",
-                "готов"
-            ]):
-                score += 25
-
-            # внедрение
-            if any(word in text_all for word in [
-                "внедрение",
-                "crm",
-                "ai",
-                "автоматизация"
-            ]):
-                score += 20
-
-            # объем
-            if any(word in text_all for word in [
-                "заявок",
-                "сотрудников",
-                "лидов"
-            ]):
-                score += 15
-
-            # контакт
-            if (
-                re.search(phone_pattern, message.text)
-                or "@" in message.text
-            ):
-                score += 30
-
-            lead_temp = "cold"
-
-            if score >= 70:
-                lead_temp = "hot"
-
-                
-            elif score >= 40:
-                lead_temp = "warm"
-
-                contact_request = ""
-
-            if (
-                score >= 70
-                and not re.search(phone_pattern, message.text)
-                and "@" not in message.text
-            ):
-
-                contact_request = (
-                    "\n\n"
-                    "Если хотите — могу подготовить "
-                    "конкретный план внедрения под ваш бизнес 👌\n\n"
-                    "Оставьте телефон, Telegram или email для связи."
-                )    
-
-
-            supabase.table("leads").update({
-                "lead_score": score,
-                "lead_temp": lead_temp
-            }).eq("chat_id", str(chat_id)).execute()  
-
-
-
-            if len(answer) > 2000:
-                answer = answer[:2000]
-
-            user_memory[chat_id].append({
-                "role": "assistant",
-                "content": answer
-            })
-            try:
-                history_text = str(user_memory[chat_id])
-
-                supabase.table("leads").update({
-                    #"ai_history": history_text,
-                    "last_message_at": datetime.utcnow().isoformat()
-                }).eq("chat_id", str(chat_id)).execute()
-
-            except Exception as save_error:
-                print("History save error:", save_error)
-                print("SAVE ERROR FULL:", save_error)
-           
-            bot.reply_to(message, answer + contact_request)
-            return
-        
-               
-
-        # запуск воронки
-        if (
-            text == "да"
-            and chat_id not in lead_state
-            and chat_id not in user_memory
-        ):
-            lead_state[chat_id] = "wait_niche"
-            lead_data[chat_id] = {}
-
-            bot.reply_to(
-                message,
-                "Отлично 👌\n\n"
-                "Чем вы занимаетесь?\n"
-                "Коротко: ниша / бизнес / направление."
-            )
-            return
-        
-
-        # # если проявил интерес
-        # if (any(word in text for word in lead_words)):
-        #     bot.reply_to(
-        #         message,
-        #         "Готовы начать диагностику?\n\nНапишите: да"
-        #     )
-        #     return
-        
-        business_words = [
-            "как",
-            "каким образом",
-            "что конкретно",
-            "подробно",
-            "какие системы",
-            "как работает",
-            "что будет",
-            "реализовано"
-        ]
-
-        if any(word in text for word in business_words):
-            bot.reply_to(
-                message,
-                "Реализация обычно такая:\n\n"
-                "1) сайт / лендинг / форма заявки\n"
-                "2) CRM фиксирует все обращения\n"
-                "3) AI-консультант отвечает 24/7\n"
-                "4) автоворонка возвращает потерянных клиентов\n"
-                "5) аналитика показывает стоимость заявки\n\n"
-                "Что интересно разобрать подробнее?"
-            )
-            return
-
-        # обычный AI чат
-
-        lead_exists = (
-            supabase.table("leads")
-            .select("id")
-            .eq("chat_id", str(chat_id))
-            .execute()
-        )
-
-        if not lead_exists.data:
-            supabase.table("leads").insert({
-                "chat_id": str(chat_id),
-                "name": message.from_user.first_name or "Без имени",
-                "username": (
-                    f"@{message.from_user.username}"
-                    if message.from_user.username
-                    else "нет"
-                ),
-                "stage": "dialog",
-                "lead_temp": "cold",
-                "lead_score": 0,
-                "last_message_at": datetime.utcnow().isoformat()
-            }).execute()
-
-        if chat_id not in user_memory:
-            user_memory[chat_id] = [
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT + "\n\n" + lead_info
-                }
-            ]
+        # =========================================
+        # USER MESSAGE
+        # =========================================
 
         user_memory[chat_id].append({
             "role": "user",
             "content": message.text
         })
 
-        try:
-            history_text = str(user_memory[chat_id])
+        if len(user_memory[chat_id]) > 80:
 
-            supabase.table("leads").update({
-                #"ai_history": history_text,
-                "last_message_at": datetime.utcnow().isoformat()
-            }).eq("chat_id", str(chat_id)).execute()
+            user_memory[chat_id] = (
+                [user_memory[chat_id][0]]
+                + user_memory[chat_id][-11:]
+            )
 
-        except Exception as save_error:
-            print("History save error:", save_error)
-            print("SAVE ERROR FULL:", save_error)
+        # =========================================
+        # GPT RESPONSE
+        # =========================================
 
         response = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o-mini",
             messages=user_memory[chat_id],
-            temperature=0.3,
-            max_tokens=250,
+            temperature=0.5,
+            max_tokens=500,
         )
 
         if response and response.choices:
-            answer = response.choices[0].message.content
-        else:
-            answer = "Ошибка AI."
-        
-        ai_notes_prompt = f"""
-        Ты AI CRM аналитик.
 
-        Проанализируй клиента.
-
-        Диалог:
-        {summary}
-
-        Ответь JSON форматом:
-
-        {{
-            "pain_level": "...",
-            "client_type": "...",
-            "ai_notes": "..."
-        }}
-
-        pain_level:
-        low / medium / high
-
-        client_type:
-        cold / warm / hot
-
-        ai_notes:
-        краткая заметка менеджеру
-        
-        """
-
-        ai_notes_response = client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Ты AI CRM аналитик."
-                },
-                {
-                    "role": "user",
-                    "content": ai_notes_prompt
-                }
-            ],
-            temperature=0.1,
-            max_tokens=120,
-        )
-        if ai_notes_response and ai_notes_response.choices:
-            ai_notes_text = (
-                ai_notes_response
+            answer = (
+                response
                 .choices[0]
                 .message
                 .content
             )
+
         else:
-            ai_notes_text = ""
 
-        ai_stage = "new"
-        ai_next_step = "send_case"
+            answer = "Извините, произошла ошибка AI."
 
-        manager_action = "send_examples"
-
-        
-        if client_type == "hot":
-            ai_stage = "closing"
-            ai_next_step = "request_contact"
-
-        elif client_type == "warm":
-            ai_stage = "qualification"
-            ai_next_step = "show_examples"
-
-        if pain_level == "high":
-            ai_next_step = "schedule_call"
-
-        pain_level = "low"
-        client_type = "cold"
-
-        if "high" in ai_notes_text:
-            pain_level = "high"
-
-        elif "medium" in ai_notes_text:
-            pain_level = "medium"
-
-        if '"client_type": "hot"' in ai_notes_text:
-            client_type = "hot"
-
-        elif '"client_type": "warm"' in ai_notes_text:
-            client_type = "warm"
+        # =========================================
+        # SUMMARY
+        # =========================================
 
         summary_prompt = f"""
-        Суммаризируй клиента для CRM.
+Суммаризируй клиента для CRM.
 
-        Кратко укажи:
-        - чем занимается
-        - боли
-        - цели
-        - интерес
-        - что обсуждали
-        - стадия готовности
-        - есть ли контакт
+Кратко укажи:
+- чем занимается
+- боли
+- цели
+- интерес
+- что обсуждали
+- стадия готовности
+- есть ли контакт
 
-        CRM данные:
+CRM данные:
 
-        Ниша:
-        {lead_data.get(chat_id, {}).get("niche", "")}
+Ниша:
+{lead_data.get(chat_id, {}).get("niche", "")}
 
-        Боль:
-        {lead_data.get(chat_id, {}).get("pain", "")}
+Боль:
+{lead_data.get(chat_id, {}).get("pain", "")}
 
-        Цель:
-        {lead_data.get(chat_id, {}).get("goal", "")}
+Цель:
+{lead_data.get(chat_id, {}).get("goal", "")}
 
-        Диалог:
+Диалог:
 
-        Клиент: {message.text}
+Клиент:
+{message.text}
 
-        AI:
-        {answer}
-        """
+AI:
+{answer}
+"""
 
         summary_response = client.chat.completions.create(
             model="gpt-4.1-mini",
@@ -1160,50 +584,161 @@ def chat(message):
         )
 
         if summary_response and summary_response.choices:
-            summary = summary_response.choices[0].message.content
+
+            summary = (
+                summary_response
+                .choices[0]
+                .message
+                .content
+            )
+
         else:
+
             summary = "Нет summary"
 
-        text_all = f"{message.text} {answer} {summary}".lower()
+        # =========================================
+        # AI NOTES
+        # =========================================
 
-        ai_temp_prompt = f"""
-        Определи температуру лида.
+        ai_notes_prompt = f"""
+Ты AI CRM аналитик.
 
-        Варианты:
-        - hot
-        - warm
-        - cold
+Проанализируй клиента.
 
-        HOT:
-        - хочет внедрение
-        - просит цену
-        - просит сроки
-        - готов обсуждать
-        - оставил контакт
+Диалог:
+{summary}
 
-        WARM:
-        - есть интерес
-        - задает вопросы
-        - изучает
+Ответь JSON форматом:
 
-        COLD:
-        - слабый интерес
-        - просто общается
+{{
+    "pain_level": "...",
+    "client_type": "...",
+    "ai_notes": "..."
+}}
 
-        Диалог:
+pain_level:
+low / medium / high
 
-        Клиент:
-        {message.text}
+client_type:
+cold / warm / hot
 
-        AI:
-        {answer}
+ai_notes:
+краткая заметка менеджеру
+"""
 
-        Ответь только одним словом:
-        hot / warm / cold
-        """
-        print("TEMP START")
+        ai_notes_response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты AI CRM аналитик."
+                },
+                {
+                    "role": "user",
+                    "content": ai_notes_prompt
+                }
+            ],
+            temperature=0.1,
+            max_tokens=120,
+        )
+
+        if ai_notes_response and ai_notes_response.choices:
+
+            ai_notes_text = (
+                ai_notes_response
+                .choices[0]
+                .message
+                .content
+            )
+
+        else:
+
+            ai_notes_text = ""
+
+        # =========================================
+        # JSON PARSE
+        # =========================================
+
+        import json
 
         try:
+
+            ai_notes_data = json.loads(ai_notes_text)
+
+            pain_level = ai_notes_data.get(
+                "pain_level",
+                "low"
+            )
+
+            client_type = ai_notes_data.get(
+                "client_type",
+                "cold"
+            )
+
+            ai_notes_text = ai_notes_data.get(
+                "ai_notes",
+                ""
+            )
+
+        except Exception as json_error:
+
+            print("JSON parse error:", json_error)
+            pain_level = "low"
+            client_type = "cold"
+            ai_notes_text = ""
+
+        # =========================================
+        # TEXT ALL
+        # =========================================
+
+        text_all = (
+            f"{message.text} "
+            f"{answer} "
+            f"{summary}"
+        ).lower()
+
+        # =========================================
+        # LEAD TEMPERATURE
+        # =========================================
+
+        ai_temp_prompt = f"""
+Определи температуру лида.
+
+Варианты:
+- hot
+- warm
+- cold
+
+HOT:
+- хочет внедрение
+- просит цену
+- просит сроки
+- готов обсуждать
+- оставил контакт
+
+WARM:
+- есть интерес
+- задает вопросы
+- изучает
+
+COLD:
+- слабый интерес
+- просто общается
+
+Диалог:
+
+Клиент:
+{message.text}
+
+AI:
+{answer}
+
+Ответь только одним словом:
+hot / warm / cold
+"""
+
+        try:
+
             ai_temp_response = client.chat.completions.create(
                 model="gpt-4.1-mini",
                 messages=[
@@ -1230,20 +765,16 @@ def chat(message):
             )
 
         except Exception as temp_error:
+
             print("TEMP ERROR:", temp_error)
             ai_temp = "cold"
 
-        print("TEMP OK", ai_temp)
-        
-        
         if ai_temp not in ["hot", "warm", "cold"]:
             ai_temp = "cold"
 
-        if ai_temp == "hot":
-            manager_action = "call_now"
-
-        # приоритет лида
-        priority_level = "low"
+        # =========================================
+        # PRIORITY
+        # =========================================
 
         if ai_temp == "hot":
             priority_level = "high"
@@ -1251,28 +782,44 @@ def chat(message):
         elif ai_temp == "warm":
             priority_level = "medium"
 
-        close_probability = 10
-        lead_score = 0
+        else:
+            priority_level = "low"
 
-        # горячий лид
-        if ai_temp == "hot":
-            close_probability += 40
-            lead_score += 40
-
-        elif ai_temp == "warm":
-            close_probability += 20
-            lead_score += 20
-
-        text_all = (
-            message.text.lower()
-            + " "
-            + answer.lower()
-        )
+        # =========================================
+        # PIPELINE
+        # =========================================
 
         pipeline_stage = "new"
 
-       
-        budget_level = "unknown"
+        if any(word in text_all for word in [
+            "цена",
+            "стоимость",
+            "сколько",
+            "бюджет"
+        ]):
+
+            pipeline_stage = "pricing"
+
+        elif any(word in text_all for word in [
+            "созвон",
+            "консультация",
+            "обсудить",
+            "связаться"
+        ]):
+
+            pipeline_stage = "consultation"
+
+        elif ai_temp == "hot":
+
+            pipeline_stage = "hot"
+
+        elif ai_temp == "warm":
+
+            pipeline_stage = "interested"
+
+        # =========================================
+        # BUDGET
+        # =========================================
 
         if any(word in text_all for word in [
             "500000",
@@ -1283,8 +830,8 @@ def chat(message):
             "филиалы",
             "отдел продаж"
         ]):
+
             budget_level = "high"
-            lead_score += 25
 
         elif any(word in text_all for word in [
             "100000",
@@ -1293,55 +840,32 @@ def chat(message):
             "crm",
             "автоматизация"
         ]):
+
             budget_level = "medium"
-            lead_score += 15
 
         elif any(word in text_all for word in [
-            "недорого",
             "дешево",
             "без бюджета",
             "нет денег"
         ]):
+
             budget_level = "low"
 
-        # этап сделки
-        if any(word in text_all for word in [
-            "стоимость",
-            "цена",
-            "сколько",
-            "бюджет"
-        ]):
-            pipeline_stage = "pricing"
-            lead_score += 20
+        # =========================================
+        # SCORE
+        # =========================================
 
-        elif any(word in text_all for word in [
-            "созвон",
-            "консультация",
-            "обсудить",
-            "связаться"
-        ]):
-            pipeline_stage = "consultation"
-            lead_score += 25
+        close_probability = 10
+        lead_score = 0
 
-        elif ai_temp == "hot":
-            pipeline_stage = "hot"
-            lead_score += 35
+        if ai_temp == "hot":
+            close_probability += 40
+            lead_score += 40
 
         elif ai_temp == "warm":
-            pipeline_stage = "interested"
-
-        # вероятность закрытия сделки
-        if pipeline_stage == "pricing":
             close_probability += 20
+            lead_score += 20
 
-        elif pipeline_stage == "consultation":
-            close_probability += 25
-            lead_score += 25
-
-        elif pipeline_stage == "hot":
-            close_probability += 35
-
-        # бюджет
         if budget_level == "high":
             close_probability += 20
             lead_score += 20
@@ -1350,20 +874,31 @@ def chat(message):
             close_probability += 10
             lead_score += 10
 
-        # есть контакт
+        if pipeline_stage == "pricing":
+            close_probability += 20
+            lead_score += 20
+
+        elif pipeline_stage == "consultation":
+            close_probability += 25
+            lead_score += 25
+
         if (
             re.search(phone_pattern, message.text)
             or "@" in message.text
         ):
+
             close_probability += 25
             lead_score += 25
 
-        # ограничение
         if close_probability > 100:
             close_probability = 100
 
         if lead_score > 100:
-            lead_score = 100    
+            lead_score = 100
+
+        # =========================================
+        # SAVE
+        # =========================================
 
         supabase.table("leads").update({
             "summary": summary,
@@ -1377,11 +912,21 @@ def chat(message):
             "pain_level": pain_level,
             "client_type": client_type,
             "ai_notes": ai_notes_text,
-            "ai_stage": ai_stage,
-            "ai_next_step": ai_next_step,
-            "manager_action": manager_action,
             "last_message_at": datetime.utcnow().isoformat()
         }).eq("chat_id", str(chat_id)).execute()
+
+        # =========================================
+        # SAVE MEMORY
+        # =========================================
+
+        user_memory[chat_id].append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        # =========================================
+        # HOT LEAD NOTIFY
+        # =========================================
 
         if ai_temp == "hot":
 
@@ -1390,30 +935,27 @@ def chat(message):
                 bot.send_message(
                     1908342578,
                     f"🔥 HOT LEAD\n\n"
-
-                    f"👤 Клиент: "
-                    f"{message.from_user.first_name}\n\n"
-
+                    f"👤 Клиент: {message.from_user.first_name}\n\n"
                     f"🌡 Температура: {ai_temp}\n"
                     f"📍 Этап: {pipeline_stage}\n"
                     f"📊 Вероятность сделки: {close_probability}%\n\n"
-
                     f"💬 Сообщение:\n"
                     f"{message.text}\n\n"
-
                     f"🧠 AI Summary:\n"
                     f"{summary[:500]}"
                 )
 
             except Exception as notify_error:
+
                 print("Notify error:", notify_error)
 
-        user_memory[chat_id].append({
-            "role": "assistant",
-            "content": answer
-        })
+        # =========================================
+        # FINAL ANSWER
+        # =========================================
 
         bot.reply_to(message, answer)
+      
+        
 
     except Exception as e:
         bot.reply_to(message, f"Ошибка AI: {e}")
