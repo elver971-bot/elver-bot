@@ -1156,6 +1156,27 @@ hot / warm / cold
         # SAVE
         # =========================================
 
+        existing_lead = (
+            supabase.table("leads")
+            .select("id")
+            .eq("chat_id", str(chat_id))
+            .execute()
+        )
+
+        if not existing_lead.data:
+
+            supabase.table("leads").insert({
+                "chat_id": str(chat_id),
+                "name": message.from_user.first_name or "Без имени",
+                "username": (
+                    f"@{message.from_user.username}"
+                    if message.from_user.username
+                    else "нет"
+                ),
+                "created_at": datetime.utcnow().isoformat(),
+                "stage": "new"
+            }).execute()
+
         supabase.table("leads").update({
             "summary": summary,
             "stage": "dialog",
