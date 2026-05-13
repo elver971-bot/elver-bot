@@ -410,6 +410,10 @@ def chat(message):
         user_text = message.text.strip()
         text = user_text.lower()
 
+        answer = ""
+        summary = ""
+        text_all = user_text.lower()
+
         user_text = message.text.strip()
         text = user_text.lower()
 
