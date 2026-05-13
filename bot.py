@@ -1176,6 +1176,9 @@ hot / warm / cold
                 "created_at": datetime.utcnow().isoformat(),
                 "stage": "new"
             }).execute()
+            
+        print("LEAD CREATED")
+        print("LEAD UPDATED")
 
         supabase.table("leads").update({
             "summary": summary,
