@@ -726,6 +726,21 @@ def chat(message):
 
             db_lead = lead.data[0]
 
+        message_count = db_lead.get("message_count", 0)
+
+        if (
+            message_count >= 20
+            and not re.search(phone_pattern, message.text)
+        ):
+
+            bot.reply_to(
+                message,
+                "Лимит бесплатной AI-консультации достигнут 👌\n\n"
+                "Для продолжения обсуждения оставьте телефон или Telegram для связи."
+            )
+
+            return
+
             lead_info = f"""
 Ниша: {db_lead.get('niche', '')}
 Боль: {db_lead.get('pain', '')}
@@ -1216,6 +1231,7 @@ hot / warm / cold
 
         supabase.table("leads").update({
             "summary": summary,
+            "message_count": message_count + 1,
             "stage": "dialog",
             "lead_temp": ai_temp,
             "pipeline_stage": pipeline_stage,
