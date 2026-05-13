@@ -531,6 +531,7 @@ def start(message):
     .eq("chat_id", str(chat_id))
     .execute()
     )
+    print("LEAD CREATED")
 
     if not lead_exists.data:
 
@@ -649,13 +650,8 @@ def chat(message):
             .eq("chat_id", str(chat_id))
             .execute()
         )
-        lead_exists = (
-            supabase.table("leads")
-            .select("id")
-            .eq("chat_id", str(chat_id))
-            .execute()
-        )
-
+        print("LEAD CREATED")
+        
         if not lead_exists.data:
 
             supabase.table("leads").insert({
