@@ -759,6 +759,8 @@ def chat(message):
             # =========================================
             # BUDGET
             # =========================================
+            
+            text_all = f"{message.text} {answer} {summary}".lower()
 
             budget_level = "unknown"
 
