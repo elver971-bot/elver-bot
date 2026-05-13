@@ -606,8 +606,10 @@ def chat(message):
                 max_tokens=500,
             )
 
-            answer = response.choices[0].message.content
-
+            if response and response.choices:
+                answer = response.choices[0].message.content
+            else:
+                answer = "Извините, произошла ошибка AI."
             
             # =========================================
             # SUMMARY
@@ -661,7 +663,10 @@ def chat(message):
                 max_tokens=200,
             )
 
-            summary = summary_response.choices[0].message.content
+            if summary_response and summary_response.choices:
+                summary = summary_response.choices[0].message.content
+            else:
+                summary = "Нет summary"
             
             # =========================================
             # AI NOTES
@@ -735,14 +740,17 @@ def chat(message):
             # =========================================
 
             
-            ai_temp = (
-                ai_temp_response
-                .choices[0]
-                .message
-                .content
-                .strip()
-                .lower()
-            )
+            if ai_temp_response and ai_temp_response.choices:
+                ai_temp = (
+                    ai_temp_response
+                    .choices[0]
+                    .message
+                    .content
+                    .strip()
+                    .lower()
+                )
+            else:
+                ai_temp = "cold"
 
             # =========================================
             # PRIORITY
@@ -1010,7 +1018,10 @@ def chat(message):
             max_tokens=250,
         )
 
-        answer = response.choices[0].message.content
+        if response and response.choices:
+            answer = response.choices[0].message.content
+        else:
+            answer = "Ошибка AI."
         
         ai_notes_prompt = f"""
         Ты AI CRM аналитик.
@@ -1054,12 +1065,16 @@ def chat(message):
             temperature=0.1,
             max_tokens=120,
         )
-        ai_notes_text = (
+        if ai_notes_response and ai_notes_response.choices:
+            ai_notes_text = (
                 ai_notes_response
                 .choices[0]
                 .message
                 .content
             )
+        else:
+            ai_notes_text = ""
+
         ai_stage = "new"
         ai_next_step = "send_case"
 
@@ -1139,7 +1154,10 @@ def chat(message):
             max_tokens=200,
         )
 
-        summary = summary_response.choices[0].message.content
+        if summary_response and summary_response.choices:
+            summary = summary_response.choices[0].message.content
+        else:
+            summary = "Нет summary"
 
         ai_temp_prompt = f"""
         Определи температуру лида.
