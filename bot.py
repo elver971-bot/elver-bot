@@ -591,6 +591,7 @@ def chat(message):
         )
 
         lead_info = ""
+        
         lead_exists = (
             supabase.table("leads")
             .select("id")
