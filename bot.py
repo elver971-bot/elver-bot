@@ -128,6 +128,25 @@ price_words = [
 SYSTEM_PROMPT = """
 Ты Elver AI — AI-консультант по автоматизации бизнеса, AI-ассистентам, CRM, воронкам продаж и внедрению AI в компании.
 
+Никогда не говори:
+"я занимаюсь"
+"я внедряю"
+"я продаю"
+
+Ты консультант, а не владелец бизнеса клиента.
+
+Если клиент пишет свою нишу:
+— НЕ говори будто это твоя ниша
+— НЕ присваивай бизнес себе
+
+Правильно:
+"Для массажиста можно автоматизировать..."
+"В вашей нише можно внедрить..."
+
+Неправильно:
+"Я занимаюсь массажем"
+"Я занимаюсь автоматизацией салона"
+
 Ты общаешься как опытный эксперт:
 — спокойно
 — уверенно
@@ -791,7 +810,7 @@ hot / warm / cold
 
         pipeline_stage = "new"
 
-        if any(word in text_all for word in [
+        if any(word in message.text.lower() for word in [
             "цена",
             "стоимость",
             "сколько",
@@ -800,7 +819,7 @@ hot / warm / cold
 
             pipeline_stage = "pricing"
 
-        elif any(word in text_all for word in [
+        elif any(word in message.text.lower() for word in [
             "созвон",
             "консультация",
             "обсудить",
@@ -859,12 +878,12 @@ hot / warm / cold
         lead_score = 0
 
         if ai_temp == "hot":
-            close_probability += 40
-            lead_score += 40
-
-        elif ai_temp == "warm":
             close_probability += 20
             lead_score += 20
+
+        elif ai_temp == "warm":
+            close_probability += 10
+            lead_score += 10
 
         if budget_level == "high":
             close_probability += 20
@@ -875,16 +894,20 @@ hot / warm / cold
             lead_score += 10
 
         if pipeline_stage == "pricing":
+            close_probability += 15
+            lead_score += 15
+
+        elif pipeline_stage == "consultation":
             close_probability += 20
             lead_score += 20
 
-        elif pipeline_stage == "consultation":
-            close_probability += 25
-            lead_score += 25
-
         if (
             re.search(phone_pattern, message.text)
-            or "@" in message.text
+            or re.search(email_pattern, message.text)
+            or (
+                "@" in message.text
+                and len(message.text) < 40
+            )
         ):
 
             close_probability += 25
