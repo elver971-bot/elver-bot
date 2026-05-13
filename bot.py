@@ -599,12 +599,13 @@ def start(message):
             "stage": "new",
             "lead_temp": "cold",
             "lead_score": 0,
+            "message_count": 1,
             "last_message_at": datetime.utcnow().isoformat()
         }).execute()
 
     if lead.data:
         db_lead = lead.data[0]
-
+        message_count = db_lead.get("message_count", 0)
         lead_info = f"""
 Клиент уже общался ранее.
 
@@ -718,6 +719,7 @@ def chat(message):
                 "stage": "new",
                 "lead_temp": "cold",
                 "lead_score": 0,
+                "message_count": 1,
                 "last_message_at": datetime.utcnow().isoformat()
             }).execute()
 
@@ -734,6 +736,7 @@ def chat(message):
                 "stage": "new",
                 "lead_temp": "cold",
                 "lead_score": 0,
+                "message_count": 1,
                 "last_message_at": datetime.utcnow().isoformat()
             }).execute()
 
@@ -756,15 +759,15 @@ def chat(message):
 
             return
 
-            lead_info = f"""
-Ниша: {db_lead.get('niche', '')}
-Боль: {db_lead.get('pain', '')}
-Цель: {db_lead.get('goal', '')}
-Этап: {db_lead.get('stage', '')}
+        lead_info = f"""
+        Ниша: {db_lead.get('niche', '')}
+        Боль: {db_lead.get('pain', '')}
+        Цель: {db_lead.get('goal', '')}
+        Этап: {db_lead.get('stage', '')}
 
-Summary:
-{db_lead.get('summary', '')}
-"""
+        Summary:
+        {db_lead.get('summary', '')}
+        """
 
         # =========================================
         # PATTERNS
