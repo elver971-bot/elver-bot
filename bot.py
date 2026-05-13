@@ -396,10 +396,7 @@ def chat(message):
         return
     try:
         chat_id = message.chat.id
-    
-    try:
-        chat_id = message.chat.id
-
+        
         ai_temp = "cold"
         ai_temp_response = None
         pipeline_stage = "new"
