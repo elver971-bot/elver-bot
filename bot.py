@@ -21,6 +21,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 bot = telebot.TeleBot(BOT_TOKEN)
 client = OpenAI(api_key=OPENAI_API_KEY)
+admin_id = 1908342578
 
 user_memory = {}
 
@@ -2163,16 +2164,22 @@ hot / warm / cold
             try:
 
                 bot.send_message(
-                    1908342578,
+
+                    admin_id,
+
                     f"🔥 HOT LEAD\n\n"
-                    f"👤 Клиент: {message.from_user.first_name}\n\n"
+
+                    f"👤 Клиент: {message.from_user.first_name}\n"
+                    f"📞 Телефон: {extracted_phone or 'нет'}\n"
+                    f"🏢 Ниша: {lead_data.get(chat_id, {}).get('niche', 'не указана')}\n\n"
+
                     f"🌡 Температура: {ai_temp}\n"
-                    f"📍 Этап: {pipeline_stage}\n"
-                    f"📊 Вероятность сделки: {close_probability}%\n\n"
+                    f"📈 Score: {lead_score}\n"
+                    f"💰 Вероятность сделки: {close_probability}%\n"
+                    f"📍 Этап: {pipeline_stage}\n\n"
+
                     f"💬 Сообщение:\n"
-                    f"{message.text}\n\n"
-                    f"🧠 AI Summary:\n"
-                    f"{summary[:500]}"
+                    f"{message.text[:500]}"
                 )
 
             except Exception as notify_error:
