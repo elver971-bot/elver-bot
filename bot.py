@@ -816,7 +816,56 @@ def leads(message):
     bot.send_message(
         message.chat.id,
         text
-    )     
+    )  
+
+@bot.message_handler(commands=["hot"])
+def hot_leads(message):
+
+    admin_id = ТВОЙ_CHAT_ID
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .eq("lead_temp", "hot")
+        .order("last_message_at", desc=True)
+        .limit(10)
+        .execute()
+    )
+
+    if not rows.data:
+
+        bot.reply_to(
+            message,
+            "🔥 Горячих лидов пока нет."
+        )
+
+        return
+
+    text = "🔥 HOT LEADS\n\n"
+
+    for lead in rows.data:
+
+        name = lead.get("name", "Без имени")
+        niche = lead.get("niche", "не указана")
+        phone = lead.get("phone", "нет")
+        score = lead.get("lead_score", 0)
+        summary = lead.get("summary", "")
+
+        text += (
+            f"👤 {name}\n"
+            f"📞 {phone}\n"
+            f"🏢 {niche}\n"
+            f"📊 Score: {score}\n"
+            f"🧠 {summary[:200]}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
