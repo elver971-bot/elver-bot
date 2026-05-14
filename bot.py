@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from flask import Flask, request
 import telebot
+from telebot import types
 from openai import OpenAI
 from supabase import create_client
 
@@ -1659,7 +1660,7 @@ def handle_contact(message):
 
     except:
         pass
-    
+
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
@@ -2421,7 +2422,23 @@ hot / warm / cold
                 "к обсуждению деталей внедрения."
             )
 
-        bot.reply_to(message, answer)
+        markup = types.ReplyKeyboardMarkup(
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+
+        contact_button = types.KeyboardButton(
+            "📱 Отправить контакт",
+            request_contact=True
+        )
+
+        markup.add(contact_button)
+
+        bot.reply_to(
+            message,
+            answer,
+            reply_markup=markup
+        )
       
         
 
