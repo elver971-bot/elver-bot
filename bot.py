@@ -1423,6 +1423,7 @@ hot / warm / cold
             "message_count": message_count + 1,
             "stage": "dialog",
             "lead_temp": ai_temp,
+            "phone": extracted_phone,
             "pipeline_stage": pipeline_stage,
             "budget_level": budget_level,
             "priority_level": priority_level,
