@@ -860,6 +860,69 @@ def hot_leads(message):
         text
     )
 
+@bot.message_handler(commands=["lead"])
+def lead_info(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        parts = message.text.split()
+
+        if len(parts) < 2:
+
+            bot.reply_to(
+                message,
+                "Используйте:\n/lead CHAT_ID"
+            )
+
+            return
+
+        target_chat_id = parts[1]
+
+        row = (
+            supabase.table("leads")
+            .select("*")
+            .eq("chat_id", target_chat_id)
+            .execute()
+        )
+
+        if not row.data:
+
+            bot.reply_to(
+                message,
+                "Лид не найден."
+            )
+
+            return
+
+        lead = row.data[0]
+
+        text = (
+            f"👤 {lead.get('name', 'Без имени')}\n\n"
+            f"📞 {lead.get('phone', 'нет')}\n"
+            f"🏢 Ниша: {lead.get('niche', 'не указана')}\n"
+            f"🌡 Температура: {lead.get('lead_temp', 'cold')}\n"
+            f"📊 Score: {lead.get('lead_score', 0)}\n\n"
+            f"🧠 Summary:\n{lead.get('summary', '-')}\n\n"
+            f"📝 AI Notes:\n{lead.get('ai_notes', '-')}"
+        )
+
+        bot.send_message(
+            message.chat.id,
+            text
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
 @bot.message_handler(func=lambda message: True)
 def chat(message):
 
