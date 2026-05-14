@@ -981,6 +981,122 @@ def pipeline(message):
         text
     )
 
+@bot.message_handler(commands=["client"])
+def client_info(message):
+
+    if message.from_user.id != admin_id:
+        return
+
+    args = message.text.split()
+
+    if len(args) < 2:
+
+        bot.reply_to(
+            message,
+            "Использование:\n/client chat_id"
+        )
+
+        return
+
+    target_chat_id = args[1]
+
+    lead = (
+        supabase.table("leads")
+        .select("*")
+        .eq("chat_id", str(target_chat_id))
+        .execute()
+    )
+
+    if not lead.data:
+
+        bot.reply_to(
+            message,
+            "Клиент не найден."
+        )
+
+        return
+
+    db_lead = lead.data[0]
+
+    report = f"""
+👤 Клиент: {db_lead.get('name', 'Без имени')}
+
+📞 Username:
+{db_lead.get('username', 'нет')}
+
+🔥 Температура:
+{db_lead.get('lead_temp', 'cold')}
+
+📍 Этап:
+{db_lead.get('pipeline_stage', 'new')}
+
+💰 Бюджет:
+{db_lead.get('budget_level', 'unknown')}
+
+⭐ Score:
+{db_lead.get('lead_score', 0)}
+
+📈 Вероятность:
+{db_lead.get('close_probability', 0)}%
+
+🧠 Summary:
+
+{db_lead.get('summary', 'нет данных')}
+
+📝 AI Notes:
+
+{db_lead.get('ai_notes', 'нет заметок')}
+"""
+
+    bot.send_message(
+        message.chat.id,
+        report[:4000]
+    )
+
+@bot.message_handler(commands=["broadcast"])
+def broadcast(message):
+
+    if message.from_user.id != admin_id:
+        return
+
+    text = message.text.replace("/broadcast", "").strip()
+
+    if not text:
+
+        bot.reply_to(
+            message,
+            "Напишите текст:\n/broadcast ваш текст"
+        )
+
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("chat_id")
+        .execute()
+    )
+
+    total = 0
+
+    for row in rows.data:
+
+        try:
+
+            bot.send_message(
+                row["chat_id"],
+                text
+            )
+
+            total += 1
+
+        except:
+            pass
+
+    bot.reply_to(
+        message,
+        f"Рассылка отправлена: {total}"
+    )
+
 @bot.message_handler(commands=["paid"])
 def paid_clients(message):
 
@@ -1505,6 +1621,46 @@ CRM DATA:
             f"Ошибка: {e}"
         )
 
+@bot.message_handler(content_types=["contact"])
+def handle_contact(message):
+
+    chat_id = message.chat.id
+
+    phone = message.contact.phone_number
+
+    supabase.table("leads").update({
+
+        "phone": phone,
+        "lead_temp": "hot",
+        "pipeline_stage": "contact_received",
+        "close_probability": 85
+
+    }).eq("chat_id", str(chat_id)).execute()
+
+    bot.send_message(
+        chat_id,
+        "✅ Контакт получен. Свяжусь с вами."
+    )
+
+    try:
+
+        bot.send_message(
+            admin_id,
+            f"""
+🔥 НОВЫЙ КОНТАКТ
+
+👤 {message.from_user.first_name}
+
+📞 {phone}
+
+🆔 {chat_id}
+"""
+        )
+
+    except:
+        pass
+    
+
 @bot.message_handler(func=lambda message: True)
 def chat(message):
 
@@ -1563,6 +1719,31 @@ def chat(message):
         contact_request = ""
 
         user_text = message.text.strip()
+
+        short_trash = [
+            "ок",
+            "ага",
+            "пон",
+            "ясно",
+            "привет",
+            "здарова",
+            "qq",
+            "+",
+            "-",
+            "1",
+            "123",
+            "test"
+        ]
+
+        if (
+            len(user_text) < 2
+            or user_text.lower() in short_trash
+        ):
+            bot.reply_to(
+                message,
+                "Опишите задачу подробнее 👍"
+            )
+            return
         phone_match = re.search(phone_pattern, message.text)
 
         extracted_phone = None
