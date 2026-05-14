@@ -24,6 +24,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 admin_id = 1908342578
 
 user_memory = {}
+last_message_time = {}
 
 lead_state = {}
 lead_data = {}
@@ -1517,6 +1518,22 @@ def chat(message):
     try:
 
         chat_id = message.chat.id
+        now = time.time()
+
+        if chat_id in last_message_time:
+
+            diff = now - last_message_time[chat_id]
+
+            if diff < 2:
+
+                bot.reply_to(
+                    message,
+                    "⏳ Слишком быстро. Подождите 2 секунды."
+                )
+
+                return
+
+        last_message_time[chat_id] = now
         if len(message.text) > 1500:
 
             bot.reply_to(
