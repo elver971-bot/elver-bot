@@ -694,6 +694,69 @@ def services(message):
         text
     )
 
+@bot.message_handler(commands=["leads"])
+def leads(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    leads_data = rows.data or []
+
+    total = len(leads_data)
+
+    hot = len([
+        x for x in leads_data
+        if x.get("lead_temp") == "hot"
+    ])
+
+    warm = len([
+        x for x in leads_data
+        if x.get("lead_temp") == "warm"
+    ])
+
+    cold = len([
+        x for x in leads_data
+        if x.get("lead_temp") == "cold"
+    ])
+
+    latest = sorted(
+        leads_data,
+        key=lambda x: x.get("last_message_at", ""),
+        reverse=True
+    )[:5]
+
+    text = (
+        f"📊 AI CRM REPORT\n\n"
+        f"Всего лидов: {total}\n"
+        f"🔥 Hot: {hot}\n"
+        f"🌤 Warm: {warm}\n"
+        f"❄️ Cold: {cold}\n\n"
+        f"Последние лиды:\n\n"
+    )
+
+    for lead in latest:
+
+        text += (
+            f"👤 {lead.get('name', 'Без имени')}\n"
+            f"📞 {lead.get('phone', 'нет телефона')}\n"
+            f"🔥 {lead.get('lead_temp', '-')}\n"
+            f"📈 {lead.get('close_probability', 0)}%\n"
+            f"💬 {lead.get('summary', '-')[:120]}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
 @bot.message_handler(commands=["id"])
 def get_my_id(message):
 
