@@ -694,6 +694,15 @@ def services(message):
         text
     )
 
+@bot.message_handler(commands=["id"])
+def get_my_id(message):
+
+    bot.reply_to(
+        message,
+        f"Ваш chat_id: {message.chat.id}"
+    )
+     
+
 @bot.message_handler(func=lambda message: True)
 def chat(message):
 
