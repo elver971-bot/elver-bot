@@ -611,22 +611,34 @@ def start(message):
     )
     print("LEAD CREATED")
 
-    if not lead_exists.data:
+    try:
 
-        supabase.table("leads").insert({
-            "chat_id": str(chat_id),
-            "name": message.from_user.first_name or "Без имени",
-            "username": (
-                f"@{message.from_user.username}"
-                if message.from_user.username
-                else "нет"
-            ),
-            "stage": "new",
-            "lead_temp": "cold",
-            "lead_score": 0,
-            "message_count": 1,
-            "last_message_at": datetime.utcnow().isoformat()
-        }).execute()
+        if not lead_exists.data:
+
+            supabase.table("leads").insert({
+
+                "chat_id": str(chat_id),
+                "name": message.from_user.first_name or "Без имени",
+
+                "username": (
+                    f"@{message.from_user.username}"
+                    if message.from_user.username
+                    else "нет"
+                ),
+
+                "stage": "new",
+                "lead_temp": "cold",
+                "lead_score": 0,
+                "message_count": 1,
+                "last_message_at": datetime.utcnow().isoformat()
+
+            }).execute()
+
+            print("LEAD CREATED")
+
+    except Exception as insert_error:
+
+        print("SUPABASE INSERT ERROR:", insert_error)
 
     if lead.data:
         db_lead = lead.data[0]
