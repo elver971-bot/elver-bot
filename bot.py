@@ -2506,6 +2506,45 @@ hot / warm / cold
 
                 print("Notify error:", notify_error)
 
+        priority_words = [
+
+            "цена",
+            "стоимость",
+            "бюджет",
+            "готов",
+            "созвон",
+            "консультация",
+            "внедрение",
+            "оплата",
+            "купить"
+
+        ]
+
+        if (
+
+            any(word in text_all for word in priority_words)
+            or extracted_phone
+
+        ):
+
+            try:
+
+                bot.send_message(
+
+                    admin_id,
+
+                    f"🚨 SUPER HOT LEAD\n\n"
+
+                    f"👤 {message.from_user.first_name}\n"
+                    f"📞 {extracted_phone or 'нет'}\n\n"
+
+                    f"💬 Сообщение:\n"
+                    f"{message.text[:500]}"
+                )
+
+            except:
+                pass
+
         # =========================================
         # FINAL ANSWER
         # =========================================
