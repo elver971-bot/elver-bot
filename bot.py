@@ -2434,6 +2434,36 @@ hot / warm / cold
 
         markup.add(contact_button)
 
+        if pipeline_stage == "pricing":
+
+            answer += (
+
+                "\n\n💰 Вижу, что вопрос бюджета для вас важен.\n"
+
+                "Могу подсказать оптимальный вариант "
+                "под вашу задачу."
+
+            )
+
+        elif pipeline_stage == "consultation":
+
+            answer += (
+
+                "\n\n📞 Предлагаю перейти "
+                "к короткому созвону на 10 минут."
+
+            )
+
+        elif ai_temp == "hot":
+
+            answer += (
+
+                "\n\n🔥 У вас уже есть хороший потенциал "
+                "для внедрения автоматизации.\n"
+
+                "Можем обсудить детали лично."
+            )
+
         bot.reply_to(
             message,
             answer,
