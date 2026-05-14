@@ -2522,23 +2522,33 @@ hot / warm / cold
             print("LEAD CREATED")
         
 
-        supabase.table("leads").update({
-            "summary": summary,
-            "message_count": (message_count or 0) + 1,
-            "stage": "dialog",
-            "lead_temp": ai_temp,
-            "phone": extracted_phone,
-            "pipeline_stage": pipeline_stage,
-            "budget_level": budget_level,
-            "priority_level": priority_level,
-            "close_probability": close_probability,
-            "lead_score": lead_score,
-            "pain_level": pain_level,
-            "client_type": client_type,
-            "business_size": business_size,
-            "ai_notes": ai_notes_text,
-            "last_message_at": datetime.utcnow().isoformat()
-        }).eq("chat_id", str(chat_id)).execute()
+        try:
+
+            supabase.table("leads").update({
+
+                "summary": summary,
+                "message_count": (message_count or 0) + 1,
+                "stage": "dialog",
+                "lead_temp": ai_temp,
+                "phone": extracted_phone,
+                "pipeline_stage": pipeline_stage,
+                "budget_level": budget_level,
+                "priority_level": priority_level,
+                "close_probability": close_probability,
+                "lead_score": lead_score,
+                "pain_level": pain_level,
+                "client_type": client_type,
+                "business_size": business_size,
+                "ai_notes": ai_notes_text,
+                "last_message_at": datetime.utcnow().isoformat()
+
+            }).eq("chat_id", str(chat_id)).execute()
+
+            print("LEAD UPDATED")
+
+        except Exception as update_error:
+
+            print("SUPABASE UPDATE ERROR:", update_error)
 
         # =========================================
         # SAVE MEMORY
