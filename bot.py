@@ -1981,13 +1981,30 @@ def chat(message):
             "content": message.text
         })
 
-        if len(user_memory[chat_id]) > 80:
+        if len(user_memory[chat_id]) > 40:
 
-            user_memory[chat_id] = (
-                [user_memory[chat_id][0]]
-                + user_memory[chat_id][-11:]
+            short_summary = (
+                summary[:1000]
+                if summary
+                else "Нет summary"
             )
 
+            user_memory[chat_id] = [
+
+                {
+                    "role": "system",
+                    "content": (
+                        SYSTEM_PROMPT
+                        + "\n\n"
+                        + lead_info
+                        + "\n\n"
+                        + "CRM SUMMARY:\n"
+                        + short_summary
+                    )
+                }
+
+            ] + user_memory[chat_id][-10:]
+    
         # =========================================
         # GPT RESPONSE
         # =========================================
