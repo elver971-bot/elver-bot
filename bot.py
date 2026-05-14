@@ -4,11 +4,6 @@ import json
 
 phone_pattern = r"(\+7|8)?[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
 
-extracted_phone = None
-
-if phone_match:
-    extracted_phone = phone_match.group(0)
-
 from datetime import datetime, timedelta
 
 from flask import Flask, request
@@ -914,7 +909,7 @@ def chat(message):
         if phone_match:
             extracted_phone = phone_match.group(0)
         text = user_text.lower()
-        
+
         text_all = text
 
         # =========================================
