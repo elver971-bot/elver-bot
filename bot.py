@@ -764,7 +764,52 @@ def get_my_id(message):
         message,
         f"Ваш chat_id: {message.chat.id}"
     )
-     
+
+@bot.message_handler(commands=["leads"])
+def leads(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .order("last_message_at", desc=True)
+        .limit(10)
+        .execute()
+    )
+
+    if not rows.data:
+
+        bot.reply_to(
+            message,
+            "Лидов пока нет."
+        )
+
+        return
+
+    text = "🔥 Последние лиды:\n\n"
+
+    for lead in rows.data:
+
+        name = lead.get("name", "Без имени")
+        niche = lead.get("niche", "не указана")
+        temp = lead.get("lead_temp", "cold")
+        score = lead.get("lead_score", 0)
+
+        text += (
+            f"👤 {name}\n"
+            f"🏢 Ниша: {niche}\n"
+            f"🌡 Температура: {temp}\n"
+            f"📊 Score: {score}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )     
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
