@@ -1098,6 +1098,62 @@ def broadcast(message):
         f"Рассылка отправлена: {total}"
     )
 
+@bot.message_handler(commands=["stats"])
+def stats(message):
+
+    if message.from_user.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    total = len(rows.data)
+
+    hot = len([
+        x for x in rows.data
+        if x.get("lead_temp") == "hot"
+    ])
+
+    warm = len([
+        x for x in rows.data
+        if x.get("lead_temp") == "warm"
+    ])
+
+    contacts = len([
+        x for x in rows.data
+        if x.get("phone")
+    ])
+
+    avg_score = 0
+
+    if total > 0:
+
+        avg_score = int(sum([
+            x.get("lead_score", 0)
+            for x in rows.data
+        ]) / total)
+
+    text = f"""
+📊 AI CRM STATS
+
+👥 Всего лидов: {total}
+
+🔥 HOT: {hot}
+🌤 WARM: {warm}
+
+📞 С контактами: {contacts}
+
+⭐ Средний score: {avg_score}
+"""
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
 @bot.message_handler(commands=["paid"])
 def paid_clients(message):
 
