@@ -923,6 +923,148 @@ def lead_info(message):
             f"Ошибка: {e}"
         )
 
+@bot.message_handler(commands=["pipeline"])
+def pipeline(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    total = len(rows.data)
+
+    cold = 0
+    warm = 0
+    hot = 0
+    paid = 0
+
+    for lead in rows.data:
+
+        temp = lead.get("lead_temp", "cold")
+
+        if temp == "cold":
+            cold += 1
+
+        elif temp == "warm":
+            warm += 1
+
+        elif temp == "hot":
+            hot += 1
+
+        stage = lead.get("pipeline_stage", "")
+
+        if stage == "paid":
+            paid += 1
+
+    text = (
+        "📊 AI PIPELINE\n\n"
+
+        f"👥 Всего лидов: {total}\n\n"
+
+        f"❄️ Cold: {cold}\n"
+        f"🌤 Warm: {warm}\n"
+        f"🔥 Hot: {hot}\n"
+        f"💰 Paid: {paid}"
+    )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
+@bot.message_handler(commands=["paid"])
+def paid_clients(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .eq("pipeline_stage", "paid")
+        .order("last_message_at", desc=True)
+        .execute()
+    )
+
+    if not rows.data:
+
+        bot.reply_to(
+            message,
+            "💰 Оплаченных клиентов пока нет."
+        )
+
+        return
+
+    text = "💰 PAID CLIENTS\n\n"
+
+    for lead in rows.data:
+
+        name = lead.get("name", "Без имени")
+        niche = lead.get("niche", "не указана")
+        phone = lead.get("phone", "нет")
+        summary = lead.get("summary", "")
+
+        text += (
+            f"👤 {name}\n"
+            f"📞 {phone}\n"
+            f"🏢 {niche}\n"
+            f"🧠 {summary[:150]}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
+@bot.message_handler(commands=["setpaid"])
+def set_paid(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        parts = message.text.split()
+
+        if len(parts) < 2:
+
+            bot.reply_to(
+                message,
+                "Используйте:\n/setpaid CHAT_ID"
+            )
+
+            return
+
+        target_chat_id = parts[1]
+
+        supabase.table("leads").update({
+
+            "pipeline_stage": "paid"
+
+        }).eq("chat_id", target_chat_id).execute()
+
+        bot.reply_to(
+            message,
+            f"✅ Клиент {target_chat_id} переведен в PAID."
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
 @bot.message_handler(func=lambda message: True)
 def chat(message):
 
