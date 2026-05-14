@@ -667,6 +667,32 @@ def start(message):
         "Коротко: ниша / бизнес / направление."
     )
 
+@bot.message_handler(commands=["services"])
+def services(message):
+
+    text = (
+        "🔥 Что мы внедряем для бизнеса:\n\n"
+
+        "• AI-ассистенты для сайта и Telegram\n"
+        "• CRM и автоматизация заявок\n"
+        "• AI-боты для продаж\n"
+        "• Telegram-воронки\n"
+        "• Автоматизация переписок\n"
+        "• AI-консультанты\n"
+        "• Интеграции с Avito и CRM\n"
+        "• AI-контент и автопостинг\n"
+        "• AI для онлайн-школ и экспертов\n\n"
+
+        "📞 Для расчета проекта отправьте:\n"
+        "— нишу\n"
+        "— задачу\n"
+        "— что хотите автоматизировать"
+    )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
 
 @bot.message_handler(func=lambda message: True)
 def chat(message):
