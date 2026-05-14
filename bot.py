@@ -2240,6 +2240,34 @@ hot / warm / cold
 
             budget_level = "low"
 
+        business_size = "small"
+
+        if any(word in text_all for word in [
+
+            "сеть",
+            "франшиза",
+            "отдел продаж",
+            "50 сотрудников",
+            "100 сотрудников",
+            "филиалы",
+            "команда"
+
+        ]):
+
+            business_size = "large"
+
+        elif any(word in text_all for word in [
+
+            "5 сотрудников",
+            "10 сотрудников",
+            "менеджер",
+            "crm",
+            "авито"
+
+        ]):
+
+            business_size = "medium"
+
         # =========================================
         # SCORE
         # =========================================
@@ -2330,6 +2358,7 @@ hot / warm / cold
             "lead_score": lead_score,
             "pain_level": pain_level,
             "client_type": client_type,
+            "business_size": business_size,
             "ai_notes": ai_notes_text,
             "last_message_at": datetime.utcnow().isoformat()
         }).eq("chat_id", str(chat_id)).execute()
