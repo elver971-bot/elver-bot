@@ -821,7 +821,7 @@ def leads(message):
 @bot.message_handler(commands=["hot"])
 def hot_leads(message):
 
-    admin_id = ТВОЙ_CHAT_ID
+    admin_id = 1908342578
 
     if message.chat.id != admin_id:
         return
