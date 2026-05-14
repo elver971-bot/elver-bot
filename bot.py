@@ -1190,6 +1190,76 @@ def export_leads(message):
             f
         )
 
+@bot.message_handler(commands=["search"])
+def search_leads(message):
+
+    if message.from_user.id != admin_id:
+        return
+
+    args = message.text.replace("/search", "").strip()
+
+    if not args:
+
+        bot.reply_to(
+            message,
+            "Использование:\n/search запрос"
+        )
+
+        return
+
+    query = args.lower()
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    found = []
+
+    for lead in rows.data:
+
+        text_blob = (
+            str(lead.get("name", ""))
+            + " "
+            + str(lead.get("username", ""))
+            + " "
+            + str(lead.get("summary", ""))
+            + " "
+            + str(lead.get("niche", ""))
+            + " "
+            + str(lead.get("phone", ""))
+        ).lower()
+
+        if query in text_blob:
+
+            found.append(lead)
+
+    if not found:
+
+        bot.reply_to(
+            message,
+            "Ничего не найдено."
+        )
+
+        return
+
+    text = f"🔎 Найдено: {len(found)}\n\n"
+
+    for lead in found[:10]:
+
+        text += (
+            f"👤 {lead.get('name', 'Без имени')}\n"
+            f"📞 {lead.get('phone', 'нет')}\n"
+            f"🏢 {lead.get('niche', 'не указана')}\n"
+            f"🔥 {lead.get('lead_temp', 'cold')}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text[:4000]
+    )
+
 @bot.message_handler(commands=["paid"])
 def paid_clients(message):
 
@@ -2854,6 +2924,70 @@ def send_followups():
                 )
 
         if text:
+            if text:
+
+                try:
+
+                    ai_followup_prompt = f"""
+            Напиши короткий follow-up клиенту.
+
+            Стиль:
+            — коротко
+            — по делу
+            — как эксперт
+            — без давления
+
+            Данные клиента:
+
+            Ниша:
+            {lead.get('niche', '')}
+
+            Summary:
+            {lead.get('summary', '')}
+
+            Температура:
+            {lead.get('lead_temp', '')}
+
+            Стадия:
+            {lead.get('pipeline_stage', '')}
+
+            Задача:
+            написать follow-up сообщение,
+            которое вернет клиента в диалог.
+            """
+
+                    ai_response = client.chat.completions.create(
+
+                        model="gpt-4.1-mini",
+
+                        messages=[
+
+                            {
+                                "role": "system",
+                                "content": "Ты AI sales assistant."
+                            },
+
+                            {
+                                "role": "user",
+                                "content": ai_followup_prompt
+                            }
+
+                        ],
+
+                        temperature=0.7,
+                        max_tokens=120,
+                    )
+
+                    text = (
+                        ai_response
+                        .choices[0]
+                        .message
+                        .content
+                    )
+
+                except Exception as ai_error:
+
+                    print("AI FOLLOWUP ERROR:", ai_error)
 
             try:
 
