@@ -4,8 +4,6 @@ import json
 
 phone_pattern = r"(\+7|8)?[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
 
-phone_match = re.search(phone_pattern, message.text)
-
 extracted_phone = None
 
 if phone_match:
@@ -909,7 +907,14 @@ def chat(message):
         contact_request = ""
 
         user_text = message.text.strip()
+        phone_match = re.search(phone_pattern, message.text)
+
+        extracted_phone = None
+
+        if phone_match:
+            extracted_phone = phone_match.group(0)
         text = user_text.lower()
+        
         text_all = text
 
         # =========================================
