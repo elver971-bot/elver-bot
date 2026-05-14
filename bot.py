@@ -1154,6 +1154,42 @@ def stats(message):
         text
     )
 
+@bot.message_handler(commands=["export"])
+def export_leads(message):
+
+    if message.from_user.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    text = "chat_id,name,username,temp,score,stage\n"
+
+    for row in rows.data:
+
+        text += (
+            f"{row.get('chat_id','')},"
+            f"{row.get('name','')},"
+            f"{row.get('username','')},"
+            f"{row.get('lead_temp','')},"
+            f"{row.get('lead_score',0)},"
+            f"{row.get('pipeline_stage','')}\n"
+        )
+
+    with open("leads.csv", "w", encoding="utf-8") as f:
+
+        f.write(text)
+
+    with open("leads.csv", "rb") as f:
+
+        bot.send_document(
+            message.chat.id,
+            f
+        )
+
 @bot.message_handler(commands=["paid"])
 def paid_clients(message):
 
@@ -2609,6 +2645,36 @@ def send_followups():
         )
 
         diff = now - last
+
+        # REANIMATION
+
+        if (
+            diff >= timedelta(days=3)
+            and not lead.get("reanimate_sent")
+        ):
+
+            try:
+
+                bot.send_message(
+                    lead["chat_id"],
+
+                    "👋 Решил уточнить:\n\n"
+                    "Вопрос автоматизации для вас еще актуален?\n\n"
+                    "Могу подсказать несколько идей под ваш бизнес."
+                )
+
+                supabase.table("leads").update({
+
+                    "reanimate_sent": True
+
+                }).eq(
+                    "chat_id",
+                    str(lead["chat_id"])
+                ).execute()
+
+            except:
+                pass
+
         step = lead.get("followup_step", 0)
         lead_temp = lead.get("lead_temp", "cold")
 
