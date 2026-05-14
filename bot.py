@@ -1939,22 +1939,7 @@ def chat(message):
         )
         print("LEAD CREATED")
         
-        if not lead_exists.data:
-
-            supabase.table("leads").insert({
-                "chat_id": str(chat_id),
-                "name": message.from_user.first_name or "Без имени",
-                "username": (
-                    f"@{message.from_user.username}"
-                    if message.from_user.username
-                    else "нет"
-                ),
-                "stage": "new",
-                "lead_temp": "cold",
-                "lead_score": 0,
-                "message_count": 1,
-                "last_message_at": datetime.utcnow().isoformat()
-            }).execute()
+                 
 
         if not lead_exists.data:
 
@@ -2522,12 +2507,12 @@ hot / warm / cold
                 "stage": "new"
             }).execute()
             
-        print("LEAD CREATED")
-        print("LEAD UPDATED")
+            print("LEAD CREATED")
+        
 
         supabase.table("leads").update({
             "summary": summary,
-            "message_count": message_count + 1,
+            "message_count": (message_count or 0) + 1,
             "stage": "dialog",
             "lead_temp": ai_temp,
             "phone": extracted_phone,
