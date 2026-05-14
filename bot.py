@@ -742,22 +742,22 @@ def chat(message):
 
         if lead.data:
 
-        db_lead = lead.data[0]
+            db_lead = lead.data[0]
 
-        message_count = db_lead.get("message_count") or 0
+            message_count = db_lead.get("message_count") or 0
 
-        if (
-            message_count >= 20
-            and not re.search(phone_pattern, message.text)
-        ):
+            if (
+                message_count >= 20
+                and not re.search(phone_pattern, message.text)
+            ):
 
-            bot.reply_to(
-                message,
-                "Лимит бесплатной AI-консультации достигнут 👌\n\n"
-                "Для продолжения обсуждения оставьте телефон или Telegram для связи."
-            )
+                bot.reply_to(
+                    message,
+                    "Лимит бесплатной AI-консультации достигнут 👌\n\n"
+                    "Для продолжения обсуждения оставьте телефон или Telegram для связи."
+                )
 
-            return
+                return
 
         lead_info = f"""
         Ниша: {db_lead.get('niche', '')}
