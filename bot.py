@@ -1,6 +1,7 @@
 import re
 import os
 import json
+import csv
 
 phone_pattern = r"(\+7|8)?[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
 
@@ -1056,6 +1057,443 @@ def set_paid(message):
         bot.reply_to(
             message,
             f"✅ Клиент {target_chat_id} переведен в PAID."
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
+@bot.message_handler(commands=["stats"])
+def stats(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    leads_data = rows.data or []
+
+    total = len(leads_data)
+
+    hot = 0
+    warm = 0
+    cold = 0
+    paid = 0
+
+    total_score = 0
+
+    for lead in leads_data:
+
+        temp = lead.get("lead_temp", "cold")
+
+        if temp == "hot":
+            hot += 1
+
+        elif temp == "warm":
+            warm += 1
+
+        else:
+            cold += 1
+
+        if lead.get("pipeline_stage") == "paid":
+            paid += 1
+
+        total_score += lead.get("lead_score", 0) or 0
+
+    avg_score = 0
+
+    if total > 0:
+        avg_score = round(total_score / total)
+
+    conversion = 0
+
+    if total > 0:
+        conversion = round((paid / total) * 100)
+
+    text = (
+        "📊 AI CRM STATS\n\n"
+
+        f"👥 Всего лидов: {total}\n\n"
+
+        f"🔥 Hot: {hot}\n"
+        f"🌤 Warm: {warm}\n"
+        f"❄️ Cold: {cold}\n\n"
+
+        f"💰 Paid: {paid}\n"
+        f"📈 Конверсия: {conversion}%\n"
+        f"🧠 Средний Score: {avg_score}"
+    )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
+@bot.message_handler(commands=["setmeeting"])
+def set_meeting(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        parts = message.text.split()
+
+        if len(parts) < 2:
+
+            bot.reply_to(
+                message,
+                "Используйте:\n/setmeeting CHAT_ID"
+            )
+
+            return
+
+        target_chat_id = parts[1]
+
+        supabase.table("leads").update({
+
+            "pipeline_stage": "meeting"
+
+        }).eq("chat_id", target_chat_id).execute()
+
+        bot.reply_to(
+            message,
+            f"📞 Лид {target_chat_id} переведен в MEETING."
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
+@bot.message_handler(commands=["lost"])
+def set_lost(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        parts = message.text.split()
+
+        if len(parts) < 2:
+
+            bot.reply_to(
+                message,
+                "Используйте:\n/lost CHAT_ID"
+            )
+
+            return
+
+        target_chat_id = parts[1]
+
+        supabase.table("leads").update({
+
+            "pipeline_stage": "lost"
+
+        }).eq("chat_id", target_chat_id).execute()
+
+        bot.reply_to(
+            message,
+            f"❌ Лид {target_chat_id} переведен в LOST."
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
+@bot.message_handler(commands=["today"])
+def today_stats(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    from datetime import datetime, timezone
+
+    today = datetime.now(timezone.utc).date()
+
+    rows = (
+        supabase.table("leads")
+        .select("*")
+        .execute()
+    )
+
+    leads_today = []
+
+    for lead in rows.data:
+
+        last_message = lead.get("last_message_at")
+
+        if not last_message:
+            continue
+
+        try:
+
+            dt = datetime.fromisoformat(
+                last_message.replace("Z", "+00:00")
+            )
+
+            if dt.date() == today:
+                leads_today.append(lead)
+
+        except:
+            pass
+
+    total = len(leads_today)
+
+    hot = len([
+        x for x in leads_today
+        if x.get("lead_temp") == "hot"
+    ])
+
+    paid = len([
+        x for x in leads_today
+        if x.get("pipeline_stage") == "paid"
+    ])
+
+    text = (
+        "📅 TODAY REPORT\n\n"
+
+        f"👥 Лидов сегодня: {total}\n"
+        f"🔥 Hot сегодня: {hot}\n"
+        f"💰 Paid сегодня: {paid}\n\n"
+    )
+
+    for lead in leads_today[:5]:
+
+        text += (
+            f"👤 {lead.get('name', 'Без имени')}\n"
+            f"🌡 {lead.get('lead_temp', 'cold')}\n"
+            f"📊 {lead.get('lead_score', 0)}\n\n"
+        )
+
+    bot.send_message(
+        message.chat.id,
+        text
+    )
+
+@bot.message_handler(commands=["broadcast"])
+def broadcast(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        parts = message.text.split(maxsplit=1)
+
+        if len(parts) < 2:
+
+            bot.reply_to(
+                message,
+                "Используйте:\n/broadcast ТЕКСТ"
+            )
+
+            return
+
+        broadcast_text = parts[1]
+
+        rows = (
+            supabase.table("leads")
+            .select("chat_id")
+            .execute()
+        )
+
+        sent = 0
+
+        for lead in rows.data:
+
+            try:
+
+                bot.send_message(
+                    int(lead["chat_id"]),
+                    broadcast_text
+                )
+
+                sent += 1
+
+            except:
+                pass
+
+        bot.reply_to(
+            message,
+            f"✅ Рассылка отправлена: {sent}"
+        )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
+@bot.message_handler(commands=["export"])
+def export_leads(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        rows = (
+            supabase.table("leads")
+            .select("*")
+            .execute()
+        )
+
+        leads = rows.data or []
+
+        filename = "leads_export.csv"
+
+        with open(filename, "w", newline="", encoding="utf-8-sig") as file:
+
+            writer = csv.writer(file)
+
+            writer.writerow([
+                "name",
+                "username",
+                "phone",
+                "niche",
+                "lead_temp",
+                "lead_score",
+                "pipeline_stage",
+                "summary"
+            ])
+
+            for lead in leads:
+
+                writer.writerow([
+                    lead.get("name", ""),
+                    lead.get("username", ""),
+                    lead.get("phone", ""),
+                    lead.get("niche", ""),
+                    lead.get("lead_temp", ""),
+                    lead.get("lead_score", ""),
+                    lead.get("pipeline_stage", ""),
+                    lead.get("summary", "")
+                ])
+
+        with open(filename, "rb") as file:
+
+            bot.send_document(
+                message.chat.id,
+                file
+            )
+
+    except Exception as e:
+
+        bot.reply_to(
+            message,
+            f"Ошибка: {e}"
+        )
+
+@bot.message_handler(commands=["ai-report"])
+def ai_report(message):
+
+    admin_id = 1908342578
+
+    if message.chat.id != admin_id:
+        return
+
+    try:
+
+        rows = (
+            supabase.table("leads")
+            .select("*")
+            .execute()
+        )
+
+        leads = rows.data or []
+
+        if not leads:
+
+            bot.reply_to(
+                message,
+                "Лидов пока нет."
+            )
+
+            return
+
+        report_data = ""
+
+        for lead in leads[:50]:
+
+            report_data += (
+                f"Имя: {lead.get('name', '')}\n"
+                f"Ниша: {lead.get('niche', '')}\n"
+                f"Температура: {lead.get('lead_temp', '')}\n"
+                f"Score: {lead.get('lead_score', '')}\n"
+                f"Stage: {lead.get('pipeline_stage', '')}\n"
+                f"Summary: {lead.get('summary', '')}\n\n"
+            )
+
+        prompt = f"""
+Проанализируй CRM лидов.
+
+Определи:
+
+1. Какие лиды самые качественные
+2. Какие ниши самые перспективные
+3. Где слабые места в продажах
+4. Что улучшить
+5. Какие лиды стоит дожимать
+6. Краткий вывод по воронке
+
+CRM DATA:
+
+{report_data}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты AI sales аналитик."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.3,
+            max_tokens=700,
+        )
+
+        report = (
+            response
+            .choices[0]
+            .message
+            .content
+        )
+
+        bot.send_message(
+            message.chat.id,
+            report
         )
 
     except Exception as e:
