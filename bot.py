@@ -605,7 +605,7 @@ def start(message):
 
     if lead.data:
         db_lead = lead.data[0]
-        message_count = db_lead.get("message_count", 0)
+        message_count = db_lead.get("message_count") or 0
         lead_info = f"""
 Клиент уже общался ранее.
 
@@ -742,9 +742,9 @@ def chat(message):
 
         if lead.data:
 
-            db_lead = lead.data[0]
+        db_lead = lead.data[0]
 
-        message_count = db_lead.get("message_count", 0)
+        message_count = db_lead.get("message_count") or 0
 
         if (
             message_count >= 20
