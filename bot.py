@@ -563,6 +563,16 @@ SYSTEM_PROMPT = """
 @bot.message_handler(commands=["start"])
 def start(message):
     chat_id = message.chat.id
+    
+    if len(message.text) > 1500:
+
+        bot.reply_to(
+            message,
+            "Сообщение слишком длинное 👌 Отправьте короче."
+        )
+
+        return
+    
 
     if message.chat.type in ["group", "supergroup"]:
 
@@ -661,6 +671,14 @@ def chat(message):
     try:
 
         chat_id = message.chat.id
+        if len(message.text) > 1500:
+
+            bot.reply_to(
+                message,
+                "Сообщение слишком длинное 👌 Отправьте короче."
+            )
+
+            return
 
         # =========================================
         # DEFAULTS
@@ -1318,7 +1336,7 @@ hot / warm / cold
 
     except Exception as e:
         bot.reply_to(message, f"Ошибка AI: {e}")
-
+        print("ERROR:", e)
 
 app = Flask(__name__)
 
